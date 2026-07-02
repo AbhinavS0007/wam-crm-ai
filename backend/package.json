@@ -1,0 +1,14 @@
+{
+  "name": "wam-crm-ai-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Backend API for WAM CRM AI",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
