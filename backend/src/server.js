@@ -1,9 +1,6 @@
 import app from './app.js';
+import { env } from './config/env.js';
 
-const PORT = 5001;
-
-
-
-app.listen(PORT, () => {
-  console.log(`WAM backend running at http://localhost:${PORT}`);
+app.listen(env.PORT, () => {
+  console.log(`WAM backend running at http://localhost:${env.PORT}`);
 });
