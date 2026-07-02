@@ -1,0 +1,13 @@
+{
+  "name": "wam-crm-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WhatsApp Multi-Account Manager, private team CRM and AI reply assistant.",
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.0.0"
+  }
+}
