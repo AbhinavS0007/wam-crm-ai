@@ -1,0 +1,15 @@
+node_modules/
+.env
+.env.*
+!.env.example
+dist/
+coverage/
+*.log
+.DS_Store
+.vscode/
+.idea/
+
+# WhatsApp login and session data
+whatsapp-auth/
+auth_info/
+session-data/
