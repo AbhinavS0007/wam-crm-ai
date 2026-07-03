@@ -4,3 +4,23 @@ coverage/
 package-lock.json
 .env
 .env.*
+# Immutable approved Phase 0 records
+phase-0/00-project-charter.md
+phase-0/01-scope-and-feature-matrix.md
+phase-0/02-roles-permissions-privacy.md
+phase-0/03-whatsapp-number-policy.md
+phase-0/04-data-retention-register.md
+phase-0/05-infrastructure-vendor-register.md
+phase-0/06-owner-escalation-register.md
+phase-0/07-risk-acceptance-register.md
+phase-0/08-phase-zero-review-checklist.md
+phase-0/09-phase-zero-signoff.md
+
+# Immutable approved architecture decisions
+docs/adr/ADR-001-javascript-mern-modular-monolith.md
+docs/adr/ADR-002-baileys-provider-and-fallback.md
+docs/adr/ADR-003-encrypted-auth-state-and-pii.md
+docs/adr/ADR-004-privacy-safe-dtos.md
+docs/adr/ADR-005-human-reviewed-ai.md
+docs/adr/ADR-006-infrastructure-direction.md
+docs/adr/ADR-007-data-retention-and-deletion.md
