@@ -5,16 +5,11 @@ WhatsApp Multi-Account Manager, private team CRM and AI reply assistant.
 ## Current project status
 
 - Phase 0: completed and approved
-- Phase 1.1: development-machine audit completed
-- Phase 1.2: repository foundation completed
-- Phase 1.3: Express backend completed
-- Phase 1.4: React frontend completed
-- Phase 1.5: MongoDB and Redis Docker setup completed
-- Phase 1.6: environment validation completed
-- Phase 1.7: linting and formatting completed
-- Phase 1.8: automated testing completed
-- Phase 1.9: CI workflow created; GitHub verification deferred
-- Phase 1.10: in progress
+- Phase 1: implementation and local verification completed
+- Phase 1 approved records: imported and verified
+- GitHub repository: connected and synchronized
+- GitHub Actions CI: passed
+- Phase 2.0: formal Phase 1 closure evidence prepared; final confirmation pending
 
 Actual WhatsApp, authentication, CRM and AI features have not been started yet.
 
