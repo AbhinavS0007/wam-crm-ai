@@ -3,18 +3,14 @@ import { describe, expect, it } from 'vitest';
 
 describe('environment configuration', () => {
   it('stops startup when the port is invalid', () => {
-    const result = spawnSync(
-      process.execPath,
-      ['-e', "import('./src/config/env.js')"],
-      {
-        cwd: process.cwd(),
-        env: {
-          ...process.env,
-          PORT: 'invalid',
-        },
-        encoding: 'utf8',
+    const result = spawnSync(process.execPath, ['-e', "import('./src/config/env.js')"], {
+      cwd: process.cwd(),
+      env: {
+        ...process.env,
+        PORT: 'invalid',
       },
-    );
+      encoding: 'utf8',
+    });
 
     const output = `${result.stdout}${result.stderr}`;
 
