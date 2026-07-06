@@ -10,7 +10,8 @@
     "lint": "eslint src",
     "test": "vitest run",
     "test:watch": "vitest",
-    "seed:super-admin": "node src/seed-super-admin.js"
+    "seed:super-admin": "node src/seed-super-admin.js",
+    "verify:indexes": "node src/scripts/verify-indexes.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
