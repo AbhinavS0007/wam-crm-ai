@@ -1,17 +1,31 @@
-export const notFound = (req, res) => {
+import { env } from '../config/env.js';
+
+export const notFoundHandler = (req, res) => {
   res.status(404).json({
     error: {
-      message: 'Route not found',
+      code: 'ROUTE_NOT_FOUND',
+      message: `Route ${req.method} ${req.originalUrl} not found.`,
     },
   });
 };
 
-export const errorHandler = (err, req, res, _next) => {
-  console.error(err);
+export const errorHandler = (error, req, res, next) => {
+  if (res.headersSent) {
+    next(error);
+    return;
+  }
 
-  res.status(500).json({
+  const statusCode = error.statusCode ?? 500;
+
+  res.status(statusCode).json({
     error: {
-      message: 'Internal server error',
+      code: error.code ?? 'INTERNAL_SERVER_ERROR',
+      message:
+        statusCode >= 500 && env.NODE_ENV === 'production'
+          ? 'Internal server error.'
+          : error.message,
+      details: error.details ?? null,
+      requestId: req.context?.requestId ?? null,
     },
   });
 };

@@ -67,6 +67,25 @@ export const markRefreshSessionRotated = ({
       status: REFRESH_SESSION_STATUSES.ROTATED,
       rotatedAt,
       replacedBySessionId,
+      lastUsedAt: rotatedAt,
+    },
+    {
+      returnDocument: 'after',
+      runValidators: true,
+    },
+  ).exec();
+
+export const markRefreshSessionExpired = ({
+  sessionId,
+  expiredAt = new Date(),
+  revokeReason = 'refresh_token_expired',
+}) =>
+  RefreshSession.findByIdAndUpdate(
+    sessionId,
+    {
+      status: REFRESH_SESSION_STATUSES.EXPIRED,
+      revokedAt: expiredAt,
+      revokeReason,
     },
     {
       returnDocument: 'after',

@@ -4,8 +4,16 @@ export const normalizeEmail = (email) => email.trim().toLowerCase();
 
 export const createUser = (userData) => User.create(userData);
 
-export const findUserById = ({ userId, includePasswordHash = false } = {}) => {
-  let query = User.findById(userId);
+export const findUserById = ({ userId, organizationId, includePasswordHash = false } = {}) => {
+  const filter = {
+    _id: userId,
+  };
+
+  if (organizationId) {
+    filter.organizationId = organizationId;
+  }
+
+  let query = User.findOne(filter);
 
   if (includePasswordHash) {
     query = query.select('+passwordHash');
@@ -53,8 +61,17 @@ export const listUsersByOrganization = ({ organizationId, role, status, limit = 
     .exec();
 };
 
-export const updateUserById = (userId, updateData) =>
-  User.findByIdAndUpdate(userId, updateData, {
+export const updateUserById = ({ userId, organizationId, updateData }) => {
+  const filter = {
+    _id: userId,
+  };
+
+  if (organizationId) {
+    filter.organizationId = organizationId;
+  }
+
+  return User.findOneAndUpdate(filter, updateData, {
     returnDocument: 'after',
     runValidators: true,
   }).exec();
+};
