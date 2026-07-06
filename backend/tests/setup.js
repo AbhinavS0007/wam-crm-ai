@@ -40,3 +40,9 @@ process.env.FRONTEND_ORIGIN = 'http://localhost:5173';
 process.env.MONGODB_URI = mongodbUri;
 process.env.REDIS_URL = redisUrl;
 process.env.LOG_LEVEL = 'error';
+process.env.BCRYPT_ROUNDS = process.env.BCRYPT_ROUNDS_TEST ?? '12';
+process.env.JWT_ACCESS_SECRET =
+  process.env.JWT_ACCESS_SECRET_TEST ?? 'test-jwt-access-secret-for-wam-crm-ai-phase-2-auth';
+process.env.JWT_ACCESS_EXPIRES_IN = process.env.JWT_ACCESS_EXPIRES_IN_TEST ?? '15m';
+process.env.REFRESH_TOKEN_BYTES = process.env.REFRESH_TOKEN_BYTES_TEST ?? '64';
+process.env.REFRESH_TOKEN_TTL_DAYS = process.env.REFRESH_TOKEN_TTL_DAYS_TEST ?? '30';

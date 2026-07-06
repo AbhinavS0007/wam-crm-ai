@@ -1,23 +1,38 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import { z } from 'zod';
 
+dotenv.config();
+
 const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production']),
-  PORT: z.coerce.number().int().positive(),
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+
+  PORT: z.coerce.number().int().positive().default(5001),
+
   FRONTEND_ORIGIN: z.string().url(),
+
   MONGODB_URI: z.string().min(1),
+
   REDIS_URL: z.string().min(1),
-  LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']),
+
+  LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
+
+  BCRYPT_ROUNDS: z.coerce.number().int().min(12).max(15).default(12),
+
+  JWT_ACCESS_SECRET: z.string().min(32),
+
+  JWT_ACCESS_EXPIRES_IN: z.string().min(2).default('15m'),
+
+  REFRESH_TOKEN_BYTES: z.coerce.number().int().min(32).max(128).default(64),
+
+  REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(30),
 });
 
 const result = envSchema.safeParse(process.env);
 
 if (!result.success) {
-  const errors = result.error.issues
-    .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
-    .join(', ');
-
-  throw new Error(`Invalid environment configuration: ${errors}`);
+  console.error('Invalid environment configuration.');
+  console.error(result.error.flatten().fieldErrors);
+  process.exit(1);
 }
 
 export const env = result.data;
