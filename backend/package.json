@@ -9,7 +9,8 @@
     "start": "node src/server.js",
     "lint": "eslint src",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "seed:super-admin": "node src/seed-super-admin.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
