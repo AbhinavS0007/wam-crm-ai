@@ -1,0 +1,38 @@
+# Phase 4 Review Checklist
+
+- [x] Phase 3 remained green at entry
+- [x] Working tree was clean at entry
+- [x] Encryption key env validation added
+- [x] Local key generation script added
+- [x] AES-256-GCM encryption service added
+- [x] Encrypted field object format added
+- [x] Key versioning added
+- [x] Wrong key fails closed
+- [x] Tampered ciphertext fails closed
+- [x] Wrong purpose/AAD fails closed
+- [x] Contact PII encryption helpers added
+- [x] WhatsAppAccount identifier encryption helpers added
+- [x] WhatsAppAuthState encrypted model added
+- [x] WhatsAppAuthState encrypted repository added
+- [x] Raw MongoDB inspection tests added
+- [x] Serializers still exclude private fields
+- [x] Redaction service added
+- [x] Log redaction tests added
+- [x] Rotation dry-run script added
+- [x] Restore/decrypt behavior verified through tests
+- [x] No production key committed
+- [x] No .env committed
+- [x] No real phone number used
+- [x] No real WhatsApp JID used
+- [x] No real client data used
+- [x] No Baileys package installed
+- [x] No QR flow added
+- [x] No WhatsApp connection added
+- [x] No PII reveal API added
+- [x] Backend lint passed locally
+- [x] Backend tests passed locally
+- [x] Phase 4 index verification passed locally
+- [x] Format check passed locally
+- [x] Audit passed locally
+- [ ] GitHub CI green after push
+- [ ] Final user confirmation: Phase 4 complete
