@@ -53,7 +53,7 @@ export const upsertConversationForContact = ({
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       upsert: true,
       runValidators: true,
       setDefaultsOnInsert: true,

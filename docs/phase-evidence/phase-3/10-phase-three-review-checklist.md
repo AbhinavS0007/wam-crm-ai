@@ -1,0 +1,23 @@
+# Phase 3 Evidence — 10 Phase Three Review Checklist
+
+- [x] Domain constants exist
+- [x] WhatsAppAccount model/repository exists
+- [x] Contact model/repository exists
+- [x] Lead ID generator exists
+- [x] Conversation model/repository exists
+- [x] Message model/repository exists
+- [x] Tag model/repository exists
+- [x] Note model/repository exists
+- [x] FollowUpTask model/repository exists
+- [x] ActivityLog model/repository exists
+- [x] IdempotencyRecord model/repository exists
+- [x] Index verification script exists
+- [x] Privacy regression tests pass
+- [x] Repository tests pass
+- [x] Lint passes
+- [x] Format check passes
+- [ ] CI passes after final push
+- [x] No Baileys
+- [x] No QR
+- [x] No WhatsApp connection
+- [x] No real customer data
