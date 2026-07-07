@@ -2,7 +2,7 @@
 
 Phase: Phase 4 — Encryption and Sensitive Data Layer
 
-Status: Pending GitHub CI verification and user confirmation.
+Status: Complete. GitHub CI is green and Phase 4 is signed off.
 
 Summary:
 Phase 4 added the encryption and sensitive-data foundation required before real WhatsApp session work.
@@ -37,7 +37,7 @@ Not built in Phase 4:
 - Media handling
 - PII reveal API
 
-Final sign-off requires:
+Final sign-off completed:
 
 - GitHub CI green
 - Working tree clean
