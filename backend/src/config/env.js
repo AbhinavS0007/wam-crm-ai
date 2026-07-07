@@ -3,6 +3,28 @@ import { z } from 'zod';
 
 dotenv.config();
 
+const booleanString = z.preprocess((value) => {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  const normalizedValue = value.trim().toLowerCase();
+
+  if (normalizedValue === 'true') {
+    return true;
+  }
+
+  if (normalizedValue === 'false') {
+    return false;
+  }
+
+  return value;
+}, z.boolean());
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 
@@ -36,6 +58,20 @@ const envSchema = z.object({
   ENCRYPTION_KEY_V2: z.string().optional(),
 
   ENCRYPTION_KEY_V3: z.string().optional(),
+
+  WHATSAPP_PROVIDER: z.enum(['baileys']).default('baileys'),
+
+  WHATSAPP_ENABLED: booleanString.default(false),
+
+  WHATSAPP_POC_ACCOUNT_ID: z.string().optional(),
+
+  WHATSAPP_QR_OUTPUT: z.enum(['terminal']).default('terminal'),
+
+  WHATSAPP_ALLOW_DISPOSABLE_POC_ONLY: booleanString.default(true),
+
+  WHATSAPP_SEND_TEXT_POC_ENABLED: booleanString.default(false),
+
+  WHATSAPP_MAX_OUTBOUND_PER_MINUTE: z.coerce.number().int().min(1).max(20).default(5),
 });
 
 const result = envSchema.safeParse(process.env);
