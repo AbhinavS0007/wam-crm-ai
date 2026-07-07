@@ -19,6 +19,7 @@ import { Tag } from '../../src/modules/tags/tag.model.js';
 import { User } from '../../src/modules/users/user.model.js';
 import { createUser } from '../../src/modules/users/user.repository.js';
 import { WhatsAppAccount } from '../../src/modules/whatsapp-accounts/whatsapp-account.model.js';
+import { WhatsAppAuthState } from '../../src/modules/whatsapp-auth-states/whatsapp-auth-state.model.js';
 import { createAccountRecord } from '../../src/modules/whatsapp-accounts/whatsapp-account.repository.js';
 
 export const createTestRunId = () => randomUUID().replaceAll('-', '');
@@ -28,6 +29,7 @@ export const initializePhase3Models = async () => {
     Organization.init(),
     User.init(),
     WhatsAppAccount.init(),
+    WhatsAppAuthState.init(),
     Contact.init(),
     Conversation.init(),
     Message.init(),
@@ -58,6 +60,7 @@ export const cleanupPhase3TestData = async (testRunId) => {
       Conversation.deleteMany({ organizationId: { $in: organizationIds } }),
       Tag.deleteMany({ organizationId: { $in: organizationIds } }),
       Contact.deleteMany({ organizationId: { $in: organizationIds } }),
+      WhatsAppAuthState.deleteMany({ organizationId: { $in: organizationIds } }),
       WhatsAppAccount.deleteMany({ organizationId: { $in: organizationIds } }),
       User.deleteMany({ organizationId: { $in: organizationIds } }),
       Organization.deleteMany({ _id: { $in: organizationIds } }),
