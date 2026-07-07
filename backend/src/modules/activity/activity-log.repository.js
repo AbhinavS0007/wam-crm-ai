@@ -1,40 +1,10 @@
+import { assertNoSensitiveKeys } from '../security/redaction.service.js';
 import { ActivityLog } from './activity-log.model.js';
 
-const BLOCKED_METADATA_KEY_PARTS = [
-  'password',
-  'token',
-  'cookie',
-  'secret',
-  'authstate',
-  'phone',
-  'jid',
-  'encryptedphone',
-  'encryptedemail',
-  'encryptedjid',
-  'providerjid',
-  'rawpayload',
-];
-
-const assertSafeMetadata = (value, path = []) => {
-  if (!value || typeof value !== 'object') {
-    return;
-  }
-
-  for (const [key, nestedValue] of Object.entries(value)) {
-    const normalizedKey = key.toLowerCase();
-
-    if (BLOCKED_METADATA_KEY_PARTS.some((blockedPart) => normalizedKey.includes(blockedPart))) {
-      throw new Error(
-        `Activity metadata contains blocked sensitive key: ${[...path, key].join('.')}`,
-      );
-    }
-
-    assertSafeMetadata(nestedValue, [...path, key]);
-  }
-};
-
 export const createActivity = (activityData) => {
-  assertSafeMetadata(activityData.metadata);
+  assertNoSensitiveKeys(activityData.metadata, {
+    label: 'Activity metadata',
+  });
 
   return ActivityLog.create(activityData);
 };

@@ -8,6 +8,7 @@ import { Message } from '../modules/messages/message.model.js';
 import { Note } from '../modules/notes/note.model.js';
 import { Tag } from '../modules/tags/tag.model.js';
 import { WhatsAppAccount } from '../modules/whatsapp-accounts/whatsapp-account.model.js';
+import { WhatsAppAuthState } from '../modules/whatsapp-auth-states/whatsapp-auth-state.model.js';
 
 const requiredIndexes = [
   {
@@ -100,6 +101,17 @@ const requiredIndexes = [
       { keys: { expiresAt: 1 }, options: { expireAfterSeconds: 0 } },
     ],
   },
+  {
+    model: WhatsAppAuthState,
+    name: 'WhatsAppAuthState',
+    indexes: [
+      {
+        keys: { organizationId: 1, whatsappAccountId: 1, namespace: 1, keyId: 1 },
+        options: { unique: true },
+      },
+      { keys: { organizationId: 1, whatsappAccountId: 1, status: 1 } },
+    ],
+  },
 ];
 
 const hasSchemaIndex = (model, expectedKeys, expectedOptions = {}) =>
@@ -147,7 +159,7 @@ const run = async () => {
   const failures = verifySchemaIndexes();
 
   if (failures.length > 0) {
-    console.error('Phase 3 index verification failed.');
+    console.error('Phase 4 index verification failed.');
     console.error(JSON.stringify(failures, null, 2));
     process.exitCode = 1;
     return;
@@ -158,7 +170,7 @@ const run = async () => {
   try {
     await Promise.all(requiredIndexes.map(({ model }) => model.init()));
 
-    console.log('Phase 3 index verification passed.');
+    console.log('Phase 4 index verification passed.');
     console.log(`Verified models: ${requiredIndexes.map(({ name }) => name).join(', ')}`);
   } finally {
     await disconnectDatabase();

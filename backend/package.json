@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "seed:super-admin": "node src/seed-super-admin.js",
     "verify:indexes": "node src/scripts/verify-indexes.js",
-    "generate:encryption-key": "node src/scripts/generate-encryption-key.js"
+    "generate:encryption-key": "node src/scripts/generate-encryption-key.js",
+    "encryption:rotation:dry-run": "node src/scripts/key-rotation-dry-run.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
