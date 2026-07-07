@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "seed:super-admin": "node src/seed-super-admin.js",
-    "verify:indexes": "node src/scripts/verify-indexes.js"
+    "verify:indexes": "node src/scripts/verify-indexes.js",
+    "generate:encryption-key": "node src/scripts/generate-encryption-key.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

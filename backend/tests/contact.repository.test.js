@@ -13,6 +13,11 @@ import {
 } from '../src/modules/contacts/contact.repository.js';
 import { serializeContact } from '../src/modules/contacts/contact.serializer.js';
 import { Organization } from '../src/modules/organizations/organization.model.js';
+import {
+  encryptContactEmailForStorage,
+  encryptContactPhoneForStorage,
+  encryptContactProviderJidsForStorage,
+} from '../src/modules/privacy/protected-pii.service.js';
 import { createOrganization } from '../src/modules/organizations/organization.repository.js';
 
 const testRunId = randomUUID().replaceAll('-', '');
@@ -67,9 +72,9 @@ describe('Phase 3.3 Contact model and repository', () => {
     const contact = await createContact({
       organizationId: organization._id,
       displayName: `Phase 3.3 Contact ${testRunId}`,
-      encryptedPhone: CANARY_PHONE,
-      encryptedEmail: CANARY_EMAIL,
-      encryptedProviderJids: [CANARY_JID],
+      encryptedPhone: encryptContactPhoneForStorage(CANARY_PHONE),
+      encryptedEmail: encryptContactEmailForStorage(CANARY_EMAIL),
+      encryptedProviderJids: encryptContactProviderJidsForStorage([CANARY_JID]),
       profileName: `Profile ${testRunId}`,
       source: 'manual',
     });
@@ -94,9 +99,14 @@ describe('Phase 3.3 Contact model and repository', () => {
       includeEncrypted: true,
     });
 
-    expect(foundWithEncryptedFields.encryptedPhone).toBe(CANARY_PHONE);
-    expect(foundWithEncryptedFields.encryptedEmail).toBe(CANARY_EMAIL);
-    expect(foundWithEncryptedFields.encryptedProviderJids).toEqual([CANARY_JID]);
+    expect(foundWithEncryptedFields.encryptedPhone.algorithm).toBe('aes-256-gcm');
+    expect(foundWithEncryptedFields.encryptedEmail.algorithm).toBe('aes-256-gcm');
+    expect(foundWithEncryptedFields.encryptedProviderJids.algorithm).toBe('aes-256-gcm');
+
+    const encryptedFieldsText = JSON.stringify(foundWithEncryptedFields);
+    expect(encryptedFieldsText).not.toContain(CANARY_PHONE);
+    expect(encryptedFieldsText).not.toContain(CANARY_EMAIL);
+    expect(encryptedFieldsText).not.toContain(CANARY_JID);
 
     const serialized = serializeContact(foundWithEncryptedFields);
     const serializedText = JSON.stringify(serialized);

@@ -1,4 +1,10 @@
 import { ACCOUNT_STATUSES } from '../../constants/account-statuses.js';
+import {
+  decryptAccountJidFromStorage,
+  decryptAccountPhoneFromStorage,
+  encryptAccountJidForStorage,
+  encryptAccountPhoneForStorage,
+} from '../privacy/protected-pii.service.js';
 import { WhatsAppAccount } from './whatsapp-account.model.js';
 
 export const createAccountRecord = (accountData) => WhatsAppAccount.create(accountData);
@@ -127,4 +133,52 @@ export const softRemoveAccount = ({
       runValidators: true,
     },
   ).exec();
+};
+
+export const setAccountEncryptedIdentifiers = ({ accountId, organizationId, phone, jid } = {}) => {
+  const update = {};
+
+  if (phone !== undefined) {
+    update.encryptedPhone = encryptAccountPhoneForStorage(phone);
+  }
+
+  if (jid !== undefined) {
+    update.encryptedJid = encryptAccountJidForStorage(jid);
+  }
+
+  return WhatsAppAccount.findOneAndUpdate(
+    {
+      _id: accountId,
+      organizationId,
+    },
+    update,
+    {
+      returnDocument: 'after',
+      runValidators: true,
+    },
+  )
+    .select('+encryptedPhone +encryptedJid')
+    .exec();
+};
+
+export const findAccountPrivateIdentifiersForInternalUse = async ({
+  accountId,
+  organizationId,
+} = {}) => {
+  const account = await findAccountById({
+    accountId,
+    organizationId,
+    includeEncrypted: true,
+  });
+
+  if (!account) {
+    return null;
+  }
+
+  return {
+    accountId: account._id,
+    organizationId: account.organizationId,
+    phone: decryptAccountPhoneFromStorage(account.encryptedPhone),
+    jid: decryptAccountJidFromStorage(account.encryptedJid),
+  };
 };

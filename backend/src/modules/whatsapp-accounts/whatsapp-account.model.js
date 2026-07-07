@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 import { ACCOUNT_STATUSES, ACCOUNT_STATUS_VALUES } from '../../constants/account-statuses.js';
+import { encryptedFieldSchema } from '../security/encrypted-field.schema.js';
 
 const whatsappAccountSettingsSchema = new mongoose.Schema(
   {
@@ -65,15 +66,13 @@ const whatsappAccountSchema = new mongoose.Schema(
     },
 
     encryptedPhone: {
-      type: String,
-      trim: true,
+      type: encryptedFieldSchema,
       default: null,
       select: false,
     },
 
     encryptedJid: {
-      type: String,
-      trim: true,
+      type: encryptedFieldSchema,
       default: null,
       select: false,
     },

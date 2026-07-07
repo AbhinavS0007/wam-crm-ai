@@ -6,6 +6,10 @@ import { connectDatabase, disconnectDatabase } from '../src/config/database.js';
 import { ACCOUNT_STATUSES } from '../src/constants/account-statuses.js';
 import { ROLES } from '../src/constants/roles.js';
 import { Organization } from '../src/modules/organizations/organization.model.js';
+import {
+  encryptAccountJidForStorage,
+  encryptAccountPhoneForStorage,
+} from '../src/modules/privacy/protected-pii.service.js';
 import { createOrganization } from '../src/modules/organizations/organization.repository.js';
 import { createUser } from '../src/modules/users/user.repository.js';
 import { User } from '../src/modules/users/user.model.js';
@@ -86,8 +90,8 @@ describe('Phase 3.2 WhatsAppAccount model and repository', () => {
       name: 'Main Sales Account',
       description: 'Internal account record only',
       brandKey: `main-sales-${testRunId}`,
-      encryptedPhone: CANARY_PHONE,
-      encryptedJid: CANARY_JID,
+      encryptedPhone: encryptAccountPhoneForStorage(CANARY_PHONE),
+      encryptedJid: encryptAccountJidForStorage(CANARY_JID),
       ownerUserId: user._id,
       createdBy: user._id,
       updatedBy: user._id,
@@ -115,8 +119,12 @@ describe('Phase 3.2 WhatsAppAccount model and repository', () => {
       includeEncrypted: true,
     });
 
-    expect(foundWithEncryptedFields.encryptedPhone).toBe(CANARY_PHONE);
-    expect(foundWithEncryptedFields.encryptedJid).toBe(CANARY_JID);
+    expect(foundWithEncryptedFields.encryptedPhone.algorithm).toBe('aes-256-gcm');
+    expect(foundWithEncryptedFields.encryptedJid.algorithm).toBe('aes-256-gcm');
+
+    const encryptedFieldsText = JSON.stringify(foundWithEncryptedFields);
+    expect(encryptedFieldsText).not.toContain(CANARY_PHONE);
+    expect(encryptedFieldsText).not.toContain(CANARY_JID);
 
     const serialized = serializeWhatsAppAccount(foundWithEncryptedFields);
     const serializedText = JSON.stringify(serialized);

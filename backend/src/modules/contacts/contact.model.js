@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 import { CONTACT_STATUSES, CONTACT_STATUS_VALUES } from '../../constants/contact-statuses.js';
+import { encryptedFieldSchema } from '../security/encrypted-field.schema.js';
 
 const contactSchema = new mongoose.Schema(
   {
@@ -28,27 +29,20 @@ const contactSchema = new mongoose.Schema(
     },
 
     encryptedPhone: {
-      type: String,
-      trim: true,
+      type: encryptedFieldSchema,
       default: null,
       select: false,
     },
 
     encryptedEmail: {
-      type: String,
-      trim: true,
+      type: encryptedFieldSchema,
       default: null,
       select: false,
     },
 
     encryptedProviderJids: {
-      type: [
-        {
-          type: String,
-          trim: true,
-        },
-      ],
-      default: [],
+      type: encryptedFieldSchema,
+      default: null,
       select: false,
     },
 

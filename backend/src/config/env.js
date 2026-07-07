@@ -25,6 +25,17 @@ const envSchema = z.object({
   REFRESH_TOKEN_BYTES: z.coerce.number().int().min(32).max(128).default(64),
 
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(30),
+
+  ENCRYPTION_KEY_CURRENT_VERSION: z
+    .string()
+    .regex(/^[1-9]\d*$/)
+    .optional(),
+
+  ENCRYPTION_KEY_V1: z.string().optional(),
+
+  ENCRYPTION_KEY_V2: z.string().optional(),
+
+  ENCRYPTION_KEY_V3: z.string().optional(),
 });
 
 const result = envSchema.safeParse(process.env);

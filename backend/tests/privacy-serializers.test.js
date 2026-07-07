@@ -2,6 +2,13 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { connectDatabase, disconnectDatabase } from '../src/config/database.js';
 import { NOTE_VISIBILITY } from '../src/constants/note-visibility.js';
+import {
+  encryptContactEmailForStorage,
+  encryptContactPhoneForStorage,
+  encryptContactProviderJidsForStorage,
+  encryptAccountJidForStorage,
+  encryptAccountPhoneForStorage,
+} from '../src/modules/privacy/protected-pii.service.js';
 import { ROLES } from '../src/constants/roles.js';
 import { createContact, findContactById } from '../src/modules/contacts/contact.repository.js';
 import { serializeContact } from '../src/modules/contacts/contact.serializer.js';
@@ -57,17 +64,17 @@ describe('Phase 3.9 privacy serializers', () => {
       organizationId: organization._id,
       name: 'Privacy Account',
       brandKey: `privacy-account-${testRunId}`,
-      encryptedPhone: CANARY_PHONE,
-      encryptedJid: CANARY_JID,
+      encryptedPhone: encryptAccountPhoneForStorage(CANARY_PHONE),
+      encryptedJid: encryptAccountJidForStorage(CANARY_JID),
       ownerUserId: user._id,
     });
 
     const contact = await createContact({
       organizationId: organization._id,
       displayName: `Privacy Contact ${testRunId}`,
-      encryptedPhone: CANARY_PHONE,
-      encryptedEmail: CANARY_EMAIL,
-      encryptedProviderJids: [CANARY_JID],
+      encryptedPhone: encryptContactPhoneForStorage(CANARY_PHONE),
+      encryptedEmail: encryptContactEmailForStorage(CANARY_EMAIL),
+      encryptedProviderJids: encryptContactProviderJidsForStorage([CANARY_JID]),
     });
 
     const accountWithPrivateFields = await findAccountById({
@@ -97,9 +104,9 @@ describe('Phase 3.9 privacy serializers', () => {
     const privateContact = await createContact({
       organizationId: base.organization._id,
       displayName: `Privacy Notes Contact ${testRunId}`,
-      encryptedPhone: CANARY_PHONE,
-      encryptedEmail: CANARY_EMAIL,
-      encryptedProviderJids: [CANARY_JID],
+      encryptedPhone: encryptContactPhoneForStorage(CANARY_PHONE),
+      encryptedEmail: encryptContactEmailForStorage(CANARY_EMAIL),
+      encryptedProviderJids: encryptContactProviderJidsForStorage([CANARY_JID]),
     });
     const privateConversation = await createPhase3Conversation({
       organizationId: base.organization._id,

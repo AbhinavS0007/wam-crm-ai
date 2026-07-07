@@ -1,4 +1,12 @@
 import { createUniqueLeadId } from '../../services/lead-id.service.js';
+import {
+  decryptContactEmailFromStorage,
+  decryptContactPhoneFromStorage,
+  decryptContactProviderJidsFromStorage,
+  encryptContactEmailForStorage,
+  encryptContactPhoneForStorage,
+  encryptContactProviderJidsForStorage,
+} from '../privacy/protected-pii.service.js';
 import { Contact } from './contact.model.js';
 
 const withEncryptedFields = (query, includeEncrypted) => {
@@ -90,4 +98,60 @@ export const findOrCreateContactByLeadId = async ({
       created: false,
     };
   }
+};
+
+export const setContactEncryptedPii = ({
+  contactId,
+  organizationId,
+  phone,
+  email,
+  providerJids,
+} = {}) => {
+  const update = {};
+
+  if (phone !== undefined) {
+    update.encryptedPhone = encryptContactPhoneForStorage(phone);
+  }
+
+  if (email !== undefined) {
+    update.encryptedEmail = encryptContactEmailForStorage(email);
+  }
+
+  if (providerJids !== undefined) {
+    update.encryptedProviderJids = encryptContactProviderJidsForStorage(providerJids);
+  }
+
+  return Contact.findOneAndUpdate(
+    {
+      _id: contactId,
+      organizationId,
+    },
+    update,
+    {
+      returnDocument: 'after',
+      runValidators: true,
+    },
+  )
+    .select('+encryptedPhone +encryptedEmail +encryptedProviderJids')
+    .exec();
+};
+
+export const findContactPrivatePiiForInternalUse = async ({ contactId, organizationId } = {}) => {
+  const contact = await findContactById({
+    contactId,
+    organizationId,
+    includeEncrypted: true,
+  });
+
+  if (!contact) {
+    return null;
+  }
+
+  return {
+    contactId: contact._id,
+    organizationId: contact.organizationId,
+    phone: decryptContactPhoneFromStorage(contact.encryptedPhone),
+    email: decryptContactEmailFromStorage(contact.encryptedEmail),
+    providerJids: decryptContactProviderJidsFromStorage(contact.encryptedProviderJids),
+  };
 };
