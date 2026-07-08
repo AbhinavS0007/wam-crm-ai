@@ -13,7 +13,10 @@
     "seed:super-admin": "node src/seed-super-admin.js",
     "verify:indexes": "node src/scripts/verify-indexes.js",
     "generate:encryption-key": "node src/scripts/generate-encryption-key.js",
-    "encryption:rotation:dry-run": "node src/scripts/key-rotation-dry-run.js"
+    "encryption:rotation:dry-run": "node src/scripts/key-rotation-dry-run.js",
+    "phase5:create-poc-account": "node src/scripts/phase5-create-poc-account.js",
+    "phase5:inspect-session": "node src/scripts/phase5-inspect-session.js",
+    "phase5:start-single-session": "node src/scripts/phase5-start-single-session.js"
   },
   "dependencies": {
     "@whiskeysockets/baileys": "7.0.0-rc13",

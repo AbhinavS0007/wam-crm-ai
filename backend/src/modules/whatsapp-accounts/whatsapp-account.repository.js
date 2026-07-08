@@ -27,6 +27,12 @@ export const findAccountById = ({ accountId, organizationId, includeEncrypted = 
   return query.exec();
 };
 
+export const findAccountByBrandKey = ({ organizationId, brandKey } = {}) =>
+  WhatsAppAccount.findOne({
+    organizationId,
+    brandKey,
+  }).exec();
+
 export const findAccountsByOrganization = ({
   organizationId,
   status,
