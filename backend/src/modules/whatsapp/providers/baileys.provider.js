@@ -1,3 +1,5 @@
+import qrcodeTerminal from 'qrcode-terminal';
+
 import { createEncryptedBaileysAuthState } from '../auth-state/baileys-auth-state.adapter.js';
 import { WhatsAppProviderNotReadyError } from '../whatsapp.errors.js';
 import { assertWhatsAppProvider, WHATSAPP_PROVIDER_NAMES } from './whatsapp-provider.interface.js';
@@ -25,6 +27,18 @@ const safeCall = async ({ callback, logger, label, value }) => {
 const resolveMakeWASocket = (baileysPackage) =>
   baileysPackage.makeWASocket ?? baileysPackage.default;
 
+export const renderTerminalQr = ({ qr, qrOutput = 'terminal' } = {}) => {
+  if (!qr || qrOutput !== 'terminal') {
+    return;
+  }
+
+  console.log('Phase 5 WhatsApp QR is ready. Scan only with POC-WhatsApp-01.');
+  console.log('Do not copy, screenshot, paste or store this QR.');
+  qrcodeTerminal.generate(qr, {
+    small: true,
+  });
+};
+
 const notImplementedYet = (operationName) =>
   new WhatsAppProviderNotReadyError(
     `${operationName} will be implemented after the Phase 5 single-session receive/send proof is ready.`,
@@ -33,6 +47,7 @@ const notImplementedYet = (operationName) =>
 export const createBaileysProvider = ({
   loadPackage = loadBaileysPackage,
   createAuthState = createEncryptedBaileysAuthState,
+  renderQr = renderTerminalQr,
   logger = console,
 } = {}) =>
   assertWhatsAppProvider({
@@ -57,7 +72,6 @@ export const createBaileysProvider = ({
         auth: authState.state,
         browser: ['WAM CRM AI', 'Chrome', '1.0.0'],
         markOnlineOnConnect: false,
-        printQRInTerminal: sessionInput.qrOutput === 'terminal',
         syncFullHistory: false,
         ...(sessionInput.socketOptions ?? {}),
       });
@@ -66,13 +80,18 @@ export const createBaileysProvider = ({
 
       socket.ev.on('connection.update', (connectionUpdate) => {
         if (connectionUpdate.qr) {
+          renderQr({
+            qr: connectionUpdate.qr,
+            qrOutput: sessionInput.qrOutput,
+          });
+
           safeCall({
             callback: sessionInput.onQr,
             logger,
             label: 'Baileys QR callback',
             value: {
               provider: WHATSAPP_PROVIDER_NAMES.BAILEYS,
-              qr: connectionUpdate.qr,
+              qrAvailable: true,
             },
           });
         }

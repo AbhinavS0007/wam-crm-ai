@@ -20,7 +20,10 @@ describe('Baileys provider runtime boundary', () => {
     const makeWASocket = vi.fn(() => fakeSocket);
     const saveCreds = vi.fn();
 
+    const renderQr = vi.fn();
+
     const provider = createBaileysProvider({
+      renderQr,
       loadPackage: async () => ({
         makeWASocket,
         initAuthCreds: vi.fn(),
@@ -63,7 +66,6 @@ describe('Baileys provider runtime boundary', () => {
             registrationId: 1,
           },
         }),
-        printQRInTerminal: true,
         syncFullHistory: false,
       }),
     );
@@ -76,9 +78,13 @@ describe('Baileys provider runtime boundary', () => {
       qr: 'CANARY_PHASE5_QR_SHOULD_NOT_LEAK',
     });
 
+    expect(renderQr).toHaveBeenCalledWith({
+      qr: 'CANARY_PHASE5_QR_SHOULD_NOT_LEAK',
+      qrOutput: 'terminal',
+    });
     expect(onQr).toHaveBeenCalledWith({
       provider: 'baileys',
-      qr: 'CANARY_PHASE5_QR_SHOULD_NOT_LEAK',
+      qrAvailable: true,
     });
     expect(onConnectionUpdate).toHaveBeenCalledWith({
       connection: 'connecting',
