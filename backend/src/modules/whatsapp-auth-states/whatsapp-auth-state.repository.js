@@ -128,3 +128,11 @@ export const deleteAuthStateForAccount = ({ organizationId, whatsappAccountId } 
     organizationId,
     whatsappAccountId,
   }).exec();
+
+export const deleteAuthStateKey = ({ organizationId, whatsappAccountId, namespace, keyId } = {}) =>
+  WhatsAppAuthState.deleteOne({
+    organizationId,
+    whatsappAccountId,
+    namespace,
+    keyId,
+  }).exec();
