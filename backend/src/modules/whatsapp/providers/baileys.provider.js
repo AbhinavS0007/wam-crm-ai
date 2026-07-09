@@ -39,6 +39,22 @@ export const renderTerminalQr = ({ qr, qrOutput = 'terminal' } = {}) => {
   });
 };
 
+export const createSafeBaileysLogger = () => {
+  const noop = () => {};
+  const safeLogger = {
+    trace: noop,
+    debug: noop,
+    info: noop,
+    warn: noop,
+    error: noop,
+    fatal: noop,
+  };
+
+  safeLogger.child = () => safeLogger;
+
+  return safeLogger;
+};
+
 const notImplementedYet = (operationName) =>
   new WhatsAppProviderNotReadyError(
     `${operationName} will be implemented after the Phase 5 single-session receive/send proof is ready.`,
@@ -72,6 +88,7 @@ export const createBaileysProvider = ({
         auth: authState.state,
         browser: ['WAM CRM AI', 'Chrome', '1.0.0'],
         markOnlineOnConnect: false,
+        logger: createSafeBaileysLogger(),
         syncFullHistory: false,
         ...(sessionInput.socketOptions ?? {}),
       });
