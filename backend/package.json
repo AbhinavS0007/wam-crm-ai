@@ -16,7 +16,8 @@
     "encryption:rotation:dry-run": "node src/scripts/key-rotation-dry-run.js",
     "phase5:create-poc-account": "node src/scripts/phase5-create-poc-account.js",
     "phase5:inspect-session": "node src/scripts/phase5-inspect-session.js",
-    "phase5:start-single-session": "node src/scripts/phase5-start-single-session.js"
+    "phase5:start-single-session": "node src/scripts/phase5-start-single-session.js",
+    "phase5:start-pairing-code": "node src/scripts/phase5-start-pairing-code-session.js"
   },
   "dependencies": {
     "@whiskeysockets/baileys": "7.0.0-rc13",

@@ -91,7 +91,12 @@ export const createSingleSessionService = ({
     return mapped;
   };
 
-  const startSingleSession = async ({ accountId = config.WHATSAPP_POC_ACCOUNT_ID } = {}) => {
+  const startSingleSession = async ({
+    accountId = config.WHATSAPP_POC_ACCOUNT_ID,
+    qrOutput = config.WHATSAPP_QR_OUTPUT,
+    pairingPhoneNumber,
+    onPairingCode,
+  } = {}) => {
     assertStartupAllowed({
       accountId,
     });
@@ -138,7 +143,9 @@ export const createSingleSessionService = ({
     const sessionHandle = await provider.createSession({
       organizationId: account.organizationId,
       whatsappAccountId: account._id,
-      qrOutput: config.WHATSAPP_QR_OUTPUT,
+      qrOutput,
+      pairingPhoneNumber,
+      onPairingCode,
       onQr: async () => {
         if (currentSession) {
           currentSession.qrAvailable = true;

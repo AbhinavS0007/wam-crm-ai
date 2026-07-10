@@ -55,6 +55,32 @@ export const createSafeBaileysLogger = () => {
   return safeLogger;
 };
 
+export const sanitizePairingPhoneNumber = (phoneNumber) => {
+  const normalizedPhoneNumber = String(phoneNumber ?? '')
+    .trim()
+    .replace(/^\+/, '')
+    .replace(/[\s()-]/g, '');
+
+  if (!/^\d{8,15}$/.test(normalizedPhoneNumber)) {
+    throw new WhatsAppProviderNotReadyError(
+      'Pairing phone number must include country code and digits only.',
+    );
+  }
+
+  return normalizedPhoneNumber;
+};
+
+export const renderTerminalPairingCode = ({ pairingCode } = {}) => {
+  if (!pairingCode) {
+    return;
+  }
+
+  console.log('Phase 5 WhatsApp pairing code is ready.');
+  console.log('Enter this code only on POC-WhatsApp-01.');
+  console.log('Do not copy, screenshot, paste or store this pairing code.');
+  console.log(`Pairing code: ${pairingCode}`);
+};
+
 const notImplementedYet = (operationName) =>
   new WhatsAppProviderNotReadyError(
     `${operationName} will be implemented after the Phase 5 single-session receive/send proof is ready.`,
@@ -64,6 +90,7 @@ export const createBaileysProvider = ({
   loadPackage = loadBaileysPackage,
   createAuthState = createEncryptedBaileysAuthState,
   renderQr = renderTerminalQr,
+  renderPairingCode = renderTerminalPairingCode,
   logger = console,
 } = {}) =>
   assertWhatsAppProvider({
@@ -120,6 +147,32 @@ export const createBaileysProvider = ({
           value: connectionUpdate,
         });
       });
+
+      if (sessionInput.pairingPhoneNumber) {
+        if (typeof socket.requestPairingCode !== 'function') {
+          throw new WhatsAppProviderNotReadyError(
+            'Baileys requestPairingCode export is unavailable.',
+          );
+        }
+
+        const pairingCode = await socket.requestPairingCode(
+          sanitizePairingPhoneNumber(sessionInput.pairingPhoneNumber),
+        );
+
+        renderPairingCode({
+          pairingCode,
+        });
+
+        await safeCall({
+          callback: sessionInput.onPairingCode,
+          logger,
+          label: 'Baileys pairing-code callback',
+          value: {
+            provider: WHATSAPP_PROVIDER_NAMES.BAILEYS,
+            pairingCodeAvailable: true,
+          },
+        });
+      }
 
       return {
         provider: WHATSAPP_PROVIDER_NAMES.BAILEYS,
