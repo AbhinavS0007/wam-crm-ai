@@ -18,7 +18,8 @@
     "phase5:inspect-session": "node src/scripts/phase5-inspect-session.js",
     "phase5:start-single-session": "node src/scripts/phase5-start-single-session.js",
     "phase5:start-pairing-code": "node src/scripts/phase5-start-pairing-code-session.js",
-    "phase5:local-baileys-poc": "node src/scripts/phase5-local-baileys-poc.js"
+    "phase5:local-baileys-poc": "node src/scripts/phase5-local-baileys-poc.js",
+    "phase5:real-provider-manual": "node src/scripts/phase5-real-provider-manual.js"
   },
   "dependencies": {
     "@hapi/boom": "10.0.1",
