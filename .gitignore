@@ -13,3 +13,4 @@ coverage/
 whatsapp-auth/
 auth_info/
 session-data/
+backend/.phase5-local-auth/

@@ -17,15 +17,19 @@
     "phase5:create-poc-account": "node src/scripts/phase5-create-poc-account.js",
     "phase5:inspect-session": "node src/scripts/phase5-inspect-session.js",
     "phase5:start-single-session": "node src/scripts/phase5-start-single-session.js",
-    "phase5:start-pairing-code": "node src/scripts/phase5-start-pairing-code-session.js"
+    "phase5:start-pairing-code": "node src/scripts/phase5-start-pairing-code-session.js",
+    "phase5:local-baileys-poc": "node src/scripts/phase5-local-baileys-poc.js"
   },
   "dependencies": {
+    "@hapi/boom": "10.0.1",
     "@whiskeysockets/baileys": "7.0.0-rc13",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.7.3",
+    "pino": "10.3.1",
+    "qrcode": "1.5.4",
     "qrcode-terminal": "0.12.0",
     "redis": "^6.1.0",
     "zod": "^4.4.3"

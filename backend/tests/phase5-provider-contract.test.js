@@ -81,9 +81,16 @@ describe('Phase 5 WhatsApp provider boundary', () => {
       const source = fs.readFileSync(filePath, 'utf8');
       const normalizedPath = filePath.split(path.sep).join('/');
 
+      const allowedBaileysImportFiles = [
+        'src/modules/whatsapp/providers/baileys.provider.js',
+        'src/scripts/phase5-local-baileys-poc.js',
+      ];
+
       return (
         source.includes(BAILEYS_IMPORT_TARGET) &&
-        !normalizedPath.endsWith('src/modules/whatsapp/providers/baileys.provider.js')
+        !allowedBaileysImportFiles.some((allowedFilePath) =>
+          normalizedPath.endsWith(allowedFilePath),
+        )
       );
     });
 
