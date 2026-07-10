@@ -40,3 +40,11 @@ This fallback adds a local-only Baileys pairing-code script so the disposable Ph
 Initial local pairing-code attempt failed with a safe Baileys `Connection Closed` / `428` before a pairing code was issued.
 
 The provider now delays the pairing-code request briefly after socket creation and reports pairing-code failures through a safe callback instead of throwing raw provider errors to the terminal.
+
+## Event-based pairing-code request
+
+After pairing code was generated but rejected on the phone side, the provider was aligned more closely with Baileys guidance.
+
+Instead of requesting the pairing code on a fixed timer, the provider now waits for a `connection.update` event with either `connection: connecting` or a QR event, then requests the pairing code once.
+
+This keeps the pairing request tied to the active socket connection lifecycle.

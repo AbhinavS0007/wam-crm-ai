@@ -129,6 +129,73 @@ export const createBaileysProvider = ({
 
       socket.ev.on('creds.update', authState.saveCreds);
 
+      let pairingCodeRequested = false;
+
+      const requestPairingCodeSafely = async () => {
+        if (!sessionInput.pairingPhoneNumber || pairingCodeRequested) {
+          return;
+        }
+
+        pairingCodeRequested = true;
+
+        if (typeof socket.requestPairingCode !== 'function') {
+          const errorSummary = {
+            name: 'WhatsAppProviderNotReadyError',
+            message: 'Baileys requestPairingCode export is unavailable.',
+            code: 'PAIRING_CODE_UNAVAILABLE',
+            statusCode: undefined,
+          };
+
+          await safeCall({
+            callback: sessionInput.onPairingCodeError,
+            logger,
+            label: 'Baileys pairing-code unavailable callback',
+            value: {
+              provider: WHATSAPP_PROVIDER_NAMES.BAILEYS,
+              pairingCodeAvailable: false,
+              error: errorSummary,
+            },
+          });
+
+          return;
+        }
+
+        try {
+          const pairingCode = await socket.requestPairingCode(
+            sanitizePairingPhoneNumber(sessionInput.pairingPhoneNumber),
+          );
+
+          renderPairingCode({
+            pairingCode,
+          });
+
+          await safeCall({
+            callback: sessionInput.onPairingCode,
+            logger,
+            label: 'Baileys pairing-code callback',
+            value: {
+              provider: WHATSAPP_PROVIDER_NAMES.BAILEYS,
+              pairingCodeAvailable: true,
+            },
+          });
+        } catch (error) {
+          const errorSummary = summarizePairingCodeError(error);
+
+          logger?.error?.('Baileys pairing-code request failed safely.', errorSummary);
+
+          await safeCall({
+            callback: sessionInput.onPairingCodeError,
+            logger,
+            label: 'Baileys pairing-code error callback',
+            value: {
+              provider: WHATSAPP_PROVIDER_NAMES.BAILEYS,
+              pairingCodeAvailable: false,
+              error: errorSummary,
+            },
+          });
+        }
+      };
+
       socket.ev.on('connection.update', (connectionUpdate) => {
         if (connectionUpdate.qr) {
           renderQr({
@@ -153,69 +220,17 @@ export const createBaileysProvider = ({
           label: 'Baileys connection update callback',
           value: connectionUpdate,
         });
-      });
 
-      let pairingCodeTimer = null;
-
-      if (sessionInput.pairingPhoneNumber) {
-        if (typeof socket.requestPairingCode !== 'function') {
-          throw new WhatsAppProviderNotReadyError(
-            'Baileys requestPairingCode export is unavailable.',
-          );
+        if (connectionUpdate.connection === 'connecting' || connectionUpdate.qr) {
+          void requestPairingCodeSafely();
         }
-
-        const requestPairingCodeSafely = async () => {
-          try {
-            const pairingCode = await socket.requestPairingCode(
-              sanitizePairingPhoneNumber(sessionInput.pairingPhoneNumber),
-            );
-
-            renderPairingCode({
-              pairingCode,
-            });
-
-            await safeCall({
-              callback: sessionInput.onPairingCode,
-              logger,
-              label: 'Baileys pairing-code callback',
-              value: {
-                provider: WHATSAPP_PROVIDER_NAMES.BAILEYS,
-                pairingCodeAvailable: true,
-              },
-            });
-          } catch (error) {
-            const errorSummary = summarizePairingCodeError(error);
-
-            logger?.error?.('Baileys pairing-code request failed safely.', errorSummary);
-
-            await safeCall({
-              callback: sessionInput.onPairingCodeError,
-              logger,
-              label: 'Baileys pairing-code error callback',
-              value: {
-                provider: WHATSAPP_PROVIDER_NAMES.BAILEYS,
-                pairingCodeAvailable: false,
-                error: errorSummary,
-              },
-            });
-          }
-        };
-
-        pairingCodeTimer = setTimeout(
-          requestPairingCodeSafely,
-          sessionInput.pairingCodeRequestDelayMs ?? 5000,
-        );
-      }
+      });
 
       return {
         provider: WHATSAPP_PROVIDER_NAMES.BAILEYS,
         socket,
         createdAt: new Date(),
         async close() {
-          if (pairingCodeTimer) {
-            clearTimeout(pairingCodeTimer);
-          }
-
           socket.end?.();
           socket.ws?.close?.();
         },
