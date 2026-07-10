@@ -95,7 +95,9 @@ export const createSingleSessionService = ({
     accountId = config.WHATSAPP_POC_ACCOUNT_ID,
     qrOutput = config.WHATSAPP_QR_OUTPUT,
     pairingPhoneNumber,
+    pairingCodeRequestDelayMs,
     onPairingCode,
+    onPairingCodeError,
   } = {}) => {
     assertStartupAllowed({
       accountId,
@@ -145,7 +147,9 @@ export const createSingleSessionService = ({
       whatsappAccountId: account._id,
       qrOutput,
       pairingPhoneNumber,
+      pairingCodeRequestDelayMs,
       onPairingCode,
+      onPairingCodeError,
       onQr: async () => {
         if (currentSession) {
           currentSession.qrAvailable = true;

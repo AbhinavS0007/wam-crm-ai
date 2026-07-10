@@ -67,9 +67,15 @@ await connectDatabase();
 const result = await service.startSingleSession({
   pairingPhoneNumber,
   qrOutput: 'none',
+  pairingCodeRequestDelayMs: 5000,
   onPairingCode: async () => {
     console.log('Pairing code was requested successfully.');
     console.log('Enter it on the disposable WhatsApp phone under Linked devices.');
+  },
+  onPairingCodeError: async ({ error }) => {
+    console.log('Pairing code request failed safely.');
+    console.log('Safe error summary:', error);
+    console.log('Do not paste phone, pairing code, JID, auth payload or raw provider logs.');
   },
 });
 

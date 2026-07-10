@@ -34,3 +34,9 @@ This fallback adds a local-only Baileys pairing-code script so the disposable Ph
 5. Confirm `phase5:inspect-session` shows `active`.
 6. Confirm encrypted auth-state exists.
 7. Confirm no real phone, pairing code, JID, QR, auth payload, or key is recorded.
+
+## Pairing-code timing fix
+
+Initial local pairing-code attempt failed with a safe Baileys `Connection Closed` / `428` before a pairing code was issued.
+
+The provider now delays the pairing-code request briefly after socket creation and reports pairing-code failures through a safe callback instead of throwing raw provider errors to the terminal.
