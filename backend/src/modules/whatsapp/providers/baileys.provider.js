@@ -197,7 +197,7 @@ export const createBaileysProvider = ({
       };
 
       socket.ev.on('connection.update', (connectionUpdate) => {
-        if (connectionUpdate.qr) {
+        if (connectionUpdate.qr && !sessionInput.pairingPhoneNumber) {
           renderQr({
             qr: connectionUpdate.qr,
             qrOutput: sessionInput.qrOutput,
