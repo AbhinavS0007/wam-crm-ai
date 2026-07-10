@@ -4,8 +4,8 @@ import {
   findAccountById,
   updateAccountStatus,
 } from '../../whatsapp-accounts/whatsapp-account.repository.js';
-import { WhatsAppProviderError } from '../whatsapp.errors.js';
 import { createBaileysProvider } from '../providers/baileys.provider.js';
+import { WhatsAppProviderError } from '../whatsapp.errors.js';
 import { mapBaileysConnectionUpdateToAccountStatus } from './session-status.mapper.js';
 
 const STOPPED_STATUSES = new Set([ACCOUNT_STATUSES.REMOVED, ACCOUNT_STATUSES.BLOCKED]);
@@ -98,6 +98,7 @@ export const createSingleSessionService = ({
     pairingCodeRequestDelayMs,
     onPairingCode,
     onPairingCodeError,
+    onInboundMessage,
   } = {}) => {
     assertStartupAllowed({
       accountId,
@@ -150,6 +151,7 @@ export const createSingleSessionService = ({
       pairingCodeRequestDelayMs,
       onPairingCode,
       onPairingCodeError,
+      onInboundMessage,
       onQr: async () => {
         if (currentSession) {
           currentSession.qrAvailable = true;
@@ -207,11 +209,27 @@ export const createSingleSessionService = ({
     };
   };
 
+  const sendTextMessage = async ({ to, text, message } = {}) => {
+    if (!currentSession) {
+      throw new WhatsAppProviderError('No WhatsApp session is running.', {
+        code: 'WHATSAPP_SESSION_NOT_RUNNING',
+      });
+    }
+
+    return provider.sendTextMessage({
+      sessionHandle: currentSession.sessionHandle,
+      to,
+      text,
+      message,
+    });
+  };
+
   const inspectSingleSession = () => serializeRuntimeSession(currentSession);
 
   return {
     startSingleSession,
     stopSingleSession,
+    sendTextMessage,
     inspectSingleSession,
   };
 };

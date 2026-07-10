@@ -70,6 +70,75 @@ export const sanitizePairingPhoneNumber = (phoneNumber) => {
   return normalizedPhoneNumber;
 };
 
+export const resolveDirectMessageJid = (to) => {
+  const recipient = String(to ?? '').trim();
+
+  if (!recipient) {
+    throw new WhatsAppProviderNotReadyError('Baileys message recipient is required.');
+  }
+
+  if (recipient.includes('@')) {
+    return recipient;
+  }
+
+  return `${sanitizePairingPhoneNumber(recipient)}@s.whatsapp.net`;
+};
+
+export const maskBaileysJid = (jid = '') => {
+  if (!jid || typeof jid !== 'string') {
+    return 'unknown';
+  }
+
+  const [left, domain = 'unknown'] = jid.split('@');
+  const visibleStart = left.slice(0, 3);
+  const visibleEnd = left.slice(-3);
+
+  return `${visibleStart}***${visibleEnd}@${domain}`;
+};
+
+export const extractBaileysText = (message = {}) =>
+  message?.message?.conversation ||
+  message?.message?.extendedTextMessage?.text ||
+  message?.message?.imageMessage?.caption ||
+  message?.message?.videoMessage?.caption ||
+  '';
+
+export const shouldIgnoreBaileysInboundMessage = (message = {}) => {
+  const remoteJid = message?.key?.remoteJid;
+
+  return (
+    !message?.message ||
+    Boolean(message?.key?.fromMe) ||
+    !remoteJid ||
+    remoteJid.endsWith('@g.us') ||
+    remoteJid === 'status@broadcast'
+  );
+};
+
+export const normalizeBaileysInboundMessage = (message = {}) => {
+  if (shouldIgnoreBaileysInboundMessage(message)) {
+    return null;
+  }
+
+  const remoteJid = message.key.remoteJid;
+  const text = extractBaileysText(message);
+
+  return {
+    provider: WHATSAPP_PROVIDER_NAMES.BAILEYS,
+    normalized: true,
+    eventType: 'message.received',
+    messageId: message.key?.id ?? null,
+    remoteJid,
+    senderJid: message.key?.participant ?? remoteJid,
+    text,
+    timestamp: message.messageTimestamp ?? null,
+    safe: {
+      from: maskBaileysJid(remoteJid),
+      textPreview: text.slice(0, 80),
+    },
+  };
+};
+
 export const renderTerminalPairingCode = ({ pairingCode } = {}) => {
   if (!pairingCode) {
     return;
@@ -87,11 +156,6 @@ const summarizePairingCodeError = (error) => ({
   code: error?.code,
   statusCode: error?.output?.statusCode,
 });
-
-const notImplementedYet = (operationName) =>
-  new WhatsAppProviderNotReadyError(
-    `${operationName} will be implemented after the Phase 5 single-session receive/send proof is ready.`,
-  );
 
 export const createBaileysProvider = ({
   loadPackage = loadBaileysPackage,
@@ -226,6 +290,21 @@ export const createBaileysProvider = ({
         }
       });
 
+      socket.ev.on('messages.upsert', async (messageUpdate = {}) => {
+        const inboundMessages = (messageUpdate.messages ?? [])
+          .map((message) => normalizeBaileysInboundMessage(message))
+          .filter(Boolean);
+
+        for (const inboundMessage of inboundMessages) {
+          await safeCall({
+            callback: sessionInput.onInboundMessage,
+            logger,
+            label: 'Baileys inbound message callback',
+            value: inboundMessage,
+          });
+        }
+      });
+
       return {
         provider: WHATSAPP_PROVIDER_NAMES.BAILEYS,
         socket,
@@ -247,8 +326,29 @@ export const createBaileysProvider = ({
     },
 
     async sendTextMessage(messageInput = {}) {
-      void messageInput;
-      throw notImplementedYet('Baileys text sending');
+      const socket = messageInput.sessionHandle?.socket ?? messageInput.socket;
+
+      if (!socket || typeof socket.sendMessage !== 'function') {
+        throw new WhatsAppProviderNotReadyError('Baileys socket is not ready for sending.');
+      }
+
+      const text = String(messageInput.text ?? messageInput.message ?? '').trim();
+
+      if (!text) {
+        throw new WhatsAppProviderNotReadyError('Baileys text message is required.');
+      }
+
+      const recipientJid = resolveDirectMessageJid(messageInput.to ?? messageInput.recipientJid);
+      const sendResult = await socket.sendMessage(recipientJid, {
+        text,
+      });
+
+      return {
+        provider: WHATSAPP_PROVIDER_NAMES.BAILEYS,
+        sent: true,
+        recipientType: recipientJid.endsWith('@g.us') ? 'group' : 'direct',
+        providerMessageId: sendResult?.key?.id ?? null,
+      };
     },
 
     normalizeEvent(providerEvent = {}) {

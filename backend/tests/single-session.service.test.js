@@ -104,6 +104,73 @@ describe('Phase 5 single-session service', () => {
     ]);
   });
 
+  it('forwards outbound text through the running provider session', async () => {
+    const account = createFakeAccount();
+    const sessionHandle = {
+      socket: {
+        sendMessage: vi.fn(),
+      },
+    };
+
+    const provider = {
+      name: 'fake-provider',
+      createSession: vi.fn(async () => sessionHandle),
+      destroySession: vi.fn(),
+      sendTextMessage: vi.fn(async () => ({
+        provider: 'fake-provider',
+        sent: true,
+      })),
+    };
+
+    const service = createSingleSessionService({
+      config: createConfig(),
+      provider,
+      accountRepository: {
+        findAccountById: vi.fn(async () => account),
+        updateAccountStatus: vi.fn(async (update) => ({
+          ...account,
+          status: update.status,
+        })),
+      },
+      now: () => new Date('2026-07-07T12:00:00.000Z'),
+    });
+
+    await service.startSingleSession();
+
+    await expect(
+      service.sendTextMessage({
+        to: '919876543210',
+        text: 'Hello from service',
+      }),
+    ).resolves.toEqual({
+      provider: 'fake-provider',
+      sent: true,
+    });
+
+    expect(provider.sendTextMessage).toHaveBeenCalledWith({
+      sessionHandle,
+      to: '919876543210',
+      text: 'Hello from service',
+      message: undefined,
+    });
+  });
+
+  it('blocks outbound text when no POC session is running', async () => {
+    const service = createSingleSessionService({
+      config: createConfig(),
+      provider: {
+        name: 'fake-provider',
+      },
+    });
+
+    await expect(
+      service.sendTextMessage({
+        to: '919876543210',
+        text: 'Hello',
+      }),
+    ).rejects.toThrow(WhatsAppProviderError);
+  });
+
   it('stops a running POC session without logging out from phone side', async () => {
     const account = createFakeAccount();
     const statusUpdates = [];
