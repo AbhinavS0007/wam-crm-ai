@@ -4,14 +4,26 @@ WhatsApp Multi-Account Manager, private team CRM and AI reply assistant.
 
 ## Current project status
 
-- Phase 0: completed and approved
-- Phase 1: implementation and local verification completed
-- Phase 1 approved records: imported and verified
-- GitHub repository: connected and synchronized
-- GitHub Actions CI: passed
-- Phase 2.0: formal Phase 1 closure evidence prepared; final confirmation pending
+- Phase 0: project charter, scope, privacy and risk registers — approved
+- Phase 1: repository foundation and local verification — approved
+- Phase 2: authentication and user management — implemented
+- Phase 3: CRM domain models (contacts, conversations, messages, tags, notes, follow-ups) — signed off
+- Phase 4: field-level encryption and protected-PII storage — signed off
+- Phase 5: WhatsApp connectivity via Baileys, real send/receive proven — signed off
+- Phase 6: inbound WhatsApp messages persisted into the CRM models — implemented
+- Phase 7: authenticated CRM serving API (conversations, threads, assignment, contact reveal) and idempotent outbound-send enqueue — implemented; CI sign-off pending
+- Phase 8: outbound delivery worker — queued messages are delivered over WhatsApp with controlled retry (`queued → sending → sent` / `failed_permanent`) — implemented; CI sign-off pending
+- Phase 9: conversation-centric CRM APIs — notes (role-visibility), follow-up tasks, tags (define + attach/detach), stage changes, and the activity timeline — implemented; CI sign-off pending
+- Phase 10: frontend chat interface (MVP) — login, inbox, message thread, and idempotent send box consuming the CRM API — implemented; CI sign-off pending
+- Phase 11: lead side-panel in the UI — stage control, notes, tags, follow-ups, audited phone-reveal, and the activity timeline (all permission-aware) — implemented; CI sign-off pending
+- Phase 12: realtime updates — SSE + Redis pub/sub push live changes so the inbox, thread, and lead panel update instantly (no polling delay) — implemented; CI sign-off pending
 
-Actual WhatsApp, authentication, CRM and AI features have not been started yet.
+The UI is now a live, working CRM: sign in → inbox → open a lead → reply, change stage, add
+notes, tag, schedule follow-ups, and reveal the phone (if permitted), with updates arriving in
+realtime. WhatsApp account management, delivered/read receipts, media handling, the AI reply
+assistant, and production deployment are still to come.
+Do not connect a real WhatsApp number or use real client data — only the disposable POC
+number and synthetic data during development.
 
 ## Technology used
 
