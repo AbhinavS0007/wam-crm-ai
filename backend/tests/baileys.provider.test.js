@@ -189,6 +189,7 @@ describe('Baileys provider runtime boundary', () => {
             remoteJid: '919876543210@s.whatsapp.net',
             id: 'direct-message-id',
           },
+          pushName: 'Test Sender',
           message: {
             conversation: 'Hello inbound',
           },
@@ -205,6 +206,7 @@ describe('Baileys provider runtime boundary', () => {
       messageId: 'direct-message-id',
       remoteJid: '919876543210@s.whatsapp.net',
       senderJid: '919876543210@s.whatsapp.net',
+      pushName: 'Test Sender',
       text: 'Hello inbound',
       timestamp: 123,
       safe: {

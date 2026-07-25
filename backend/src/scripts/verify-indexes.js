@@ -26,6 +26,7 @@ const requiredIndexes = [
     indexes: [
       { keys: { organizationId: 1, leadId: 1 }, options: { unique: true } },
       { keys: { organizationId: 1, displayName: 1 } },
+      { keys: { organizationId: 1, providerContactKey: 1 }, options: { unique: true } },
     ],
   },
   {

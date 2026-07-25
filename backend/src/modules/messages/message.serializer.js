@@ -30,6 +30,9 @@ export const serializeMessage = (message) => {
     receivedAt: serializeDate(value.receivedAt),
     providerTimestamp: serializeDate(value.providerTimestamp),
     statusUpdatedAt: serializeDate(value.statusUpdatedAt),
+    deliveryAttempts: value.deliveryAttempts ?? 0,
+    lastDeliveryError: value.lastDeliveryError ?? null,
+    nextAttemptAt: serializeDate(value.nextAttemptAt),
     createdAt: serializeDate(value.createdAt),
     updatedAt: serializeDate(value.updatedAt),
   };

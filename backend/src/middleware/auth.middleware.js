@@ -5,6 +5,7 @@ import { USER_STATUSES } from '../constants/user-statuses.js';
 import { findRefreshSessionById } from '../modules/auth/refresh-session.repository.js';
 import {
   resolveUserPermissions,
+  userHasAnyPermission,
   userHasEveryPermission,
 } from '../modules/auth/permission.service.js';
 import { verifyAccessToken } from '../modules/auth/token.service.js';
@@ -131,6 +132,57 @@ export const requirePermissions =
     next();
   };
 
+export const requireAnyPermission =
+  (...permissions) =>
+  (req, res, next) => {
+    if (!req.auth?.user) {
+      next(
+        createHttpError({
+          statusCode: 401,
+          code: 'AUTHENTICATION_REQUIRED',
+          message: 'Authentication is required.',
+        }),
+      );
+      return;
+    }
+
+    if (
+      !userHasAnyPermission({
+        user: req.auth.user,
+        permissions,
+      })
+    ) {
+      next(
+        createHttpError({
+          statusCode: 403,
+          code: 'PERMISSION_DENIED',
+          message: 'You do not have permission to perform this action.',
+          details: {
+            requiredAnyPermissions: permissions,
+          },
+        }),
+      );
+      return;
+    }
+
+    next();
+  };
+
 export const requireUsersRead = requirePermissions(PERMISSIONS.USERS_READ);
 
 export const requireUsersManage = requirePermissions(PERMISSIONS.USERS_MANAGE);
+
+export const requireConversationsRead = requireAnyPermission(
+  PERMISSIONS.CONVERSATIONS_READ_ASSIGNED,
+  PERMISSIONS.CONVERSATIONS_READ_ALL,
+);
+
+export const requireConversationsAssign = requirePermissions(PERMISSIONS.CONVERSATIONS_ASSIGN);
+
+export const requireMessagesSend = requirePermissions(PERMISSIONS.MESSAGES_SEND);
+
+export const requireClientPiiReveal = requirePermissions(PERMISSIONS.CLIENT_PII_REVEAL);
+
+export const requireCrmTasksManage = requirePermissions(PERMISSIONS.CRM_TASKS_MANAGE);
+
+export const requireCrmTagsManage = requirePermissions(PERMISSIONS.CRM_TAGS_MANAGE);

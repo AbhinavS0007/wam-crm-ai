@@ -2,6 +2,10 @@ import app from './app.js';
 import { connectDatabase, disconnectDatabase } from './config/database.js';
 import { env } from './config/env.js';
 import { connectRedis, disconnectRedis } from './config/redis.js';
+import {
+  startRealtimeSubscriber,
+  stopRealtimeSubscriber,
+} from './modules/realtime/realtime.hub.js';
 
 const listenForRequests = ({ appInstance, port }) =>
   new Promise((resolve, reject) => {
@@ -54,10 +58,12 @@ export const startServer = async ({
   connectRedisFn = connectRedis,
   disconnectDatabaseFn = disconnectDatabase,
   disconnectRedisFn = disconnectRedis,
+  startRealtimeSubscriberFn = startRealtimeSubscriber,
 } = {}) => {
   try {
     await connectDatabaseFn();
     await connectRedisFn();
+    await startRealtimeSubscriberFn();
 
     return await listenForRequests({
       appInstance,
@@ -74,10 +80,12 @@ export const stopServer = async ({
   server,
   disconnectDatabaseFn = disconnectDatabase,
   disconnectRedisFn = disconnectRedis,
+  stopRealtimeSubscriberFn = stopRealtimeSubscriber,
 } = {}) => {
   let httpServerError = null;
 
   try {
+    await stopRealtimeSubscriberFn();
     await closeHttpServer(server);
   } catch (error) {
     httpServerError = error;

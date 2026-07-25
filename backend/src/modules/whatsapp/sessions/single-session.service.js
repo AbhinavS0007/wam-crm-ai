@@ -37,9 +37,32 @@ export const createSingleSessionService = ({
     findAccountById,
     updateAccountStatus,
   },
+  inboundMessageService = null,
   now = () => new Date(),
 } = {}) => {
   let currentSession = null;
+
+  const persistInboundMessage = async ({ account, inboundMessage }) => {
+    if (!inboundMessageService) {
+      return null;
+    }
+
+    try {
+      return await inboundMessageService.ingestInboundMessage({
+        organizationId: account.organizationId,
+        whatsappAccountId: account._id,
+        inboundMessage,
+      });
+    } catch (error) {
+      console.error('Inbound message ingestion failed safely.', {
+        code: error?.code,
+        name: error?.name,
+        message: error?.message,
+      });
+
+      return null;
+    }
+  };
 
   const assertStartupAllowed = ({ accountId } = {}) => {
     if (!asBoolean(config.WHATSAPP_ENABLED)) {
@@ -151,7 +174,16 @@ export const createSingleSessionService = ({
       pairingCodeRequestDelayMs,
       onPairingCode,
       onPairingCodeError,
-      onInboundMessage,
+      onInboundMessage: async (inboundMessage) => {
+        const ingestionResult = await persistInboundMessage({
+          account,
+          inboundMessage,
+        });
+
+        if (typeof onInboundMessage === 'function') {
+          await onInboundMessage(inboundMessage, ingestionResult);
+        }
+      },
       onQr: async () => {
         if (currentSession) {
           currentSession.qrAvailable = true;

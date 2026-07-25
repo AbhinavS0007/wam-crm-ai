@@ -155,6 +155,118 @@ describe('Phase 5 single-session service', () => {
     });
   });
 
+  it('ingests inbound messages through the injected ingestion service and forwards the result', async () => {
+    const account = createFakeAccount();
+    let capturedOnInboundMessage = null;
+
+    const provider = {
+      name: 'fake-provider',
+      createSession: vi.fn(async (input) => {
+        capturedOnInboundMessage = input.onInboundMessage;
+        return {
+          close: vi.fn(),
+        };
+      }),
+      destroySession: vi.fn(),
+    };
+
+    const ingestInboundMessage = vi.fn(async () => ({
+      persisted: true,
+      duplicate: false,
+      leadId: 'LEAD-20260724-ABC123',
+    }));
+
+    const callerCallback = vi.fn();
+
+    const service = createSingleSessionService({
+      config: createConfig(),
+      provider,
+      accountRepository: {
+        findAccountById: vi.fn(async () => account),
+        updateAccountStatus: vi.fn(async (update) => ({
+          ...account,
+          status: update.status,
+        })),
+      },
+      inboundMessageService: {
+        ingestInboundMessage,
+      },
+      now: () => new Date('2026-07-24T12:00:00.000Z'),
+    });
+
+    await service.startSingleSession({
+      onInboundMessage: callerCallback,
+    });
+
+    const inboundMessage = {
+      eventType: 'message.received',
+      senderJid: '919876543210@s.whatsapp.net',
+      text: 'Hello inbound',
+    };
+
+    await capturedOnInboundMessage(inboundMessage);
+
+    expect(ingestInboundMessage).toHaveBeenCalledWith({
+      organizationId: account.organizationId,
+      whatsappAccountId: account._id,
+      inboundMessage,
+    });
+    expect(callerCallback).toHaveBeenCalledWith(inboundMessage, {
+      persisted: true,
+      duplicate: false,
+      leadId: 'LEAD-20260724-ABC123',
+    });
+  });
+
+  it('keeps the session alive and still notifies the caller when ingestion throws', async () => {
+    const account = createFakeAccount();
+    let capturedOnInboundMessage = null;
+
+    const provider = {
+      name: 'fake-provider',
+      createSession: vi.fn(async (input) => {
+        capturedOnInboundMessage = input.onInboundMessage;
+        return {
+          close: vi.fn(),
+        };
+      }),
+      destroySession: vi.fn(),
+    };
+
+    const callerCallback = vi.fn();
+
+    const service = createSingleSessionService({
+      config: createConfig(),
+      provider,
+      accountRepository: {
+        findAccountById: vi.fn(async () => account),
+        updateAccountStatus: vi.fn(async (update) => ({
+          ...account,
+          status: update.status,
+        })),
+      },
+      inboundMessageService: {
+        ingestInboundMessage: vi.fn(async () => {
+          throw new Error('ingestion boom');
+        }),
+      },
+      now: () => new Date('2026-07-24T12:00:00.000Z'),
+    });
+
+    await service.startSingleSession({
+      onInboundMessage: callerCallback,
+    });
+
+    const inboundMessage = {
+      eventType: 'message.received',
+      senderJid: '919876543210@s.whatsapp.net',
+      text: 'Hello inbound',
+    };
+
+    await expect(capturedOnInboundMessage(inboundMessage)).resolves.toBeUndefined();
+    expect(callerCallback).toHaveBeenCalledWith(inboundMessage, null);
+  });
+
   it('blocks outbound text when no POC session is running', async () => {
     const service = createSingleSessionService({
       config: createConfig(),

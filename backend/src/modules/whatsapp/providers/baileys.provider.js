@@ -130,6 +130,7 @@ export const normalizeBaileysInboundMessage = (message = {}) => {
     messageId: message.key?.id ?? null,
     remoteJid,
     senderJid: message.key?.participant ?? remoteJid,
+    pushName: message.pushName ?? null,
     text,
     timestamp: message.messageTimestamp ?? null,
     safe: {

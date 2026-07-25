@@ -46,6 +46,13 @@ const contactSchema = new mongoose.Schema(
       select: false,
     },
 
+    providerContactKey: {
+      type: String,
+      trim: true,
+      maxlength: 128,
+      default: null,
+    },
+
     profileName: {
       type: String,
       trim: true,
@@ -87,5 +94,20 @@ contactSchema.index({
   organizationId: 1,
   displayName: 1,
 });
+
+contactSchema.index(
+  {
+    organizationId: 1,
+    providerContactKey: 1,
+  },
+  {
+    unique: true,
+    partialFilterExpression: {
+      providerContactKey: {
+        $type: 'string',
+      },
+    },
+  },
+);
 
 export const Contact = mongoose.models.Contact ?? mongoose.model('Contact', contactSchema);

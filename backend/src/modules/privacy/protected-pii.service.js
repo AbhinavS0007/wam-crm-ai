@@ -1,3 +1,4 @@
+import { BLIND_INDEX_PURPOSES, computeBlindIndex } from '../security/blind-index.service.js';
 import {
   decryptJson,
   decryptString,
@@ -5,6 +6,59 @@ import {
   encryptString,
 } from '../security/encryption.service.js';
 import { EncryptionOperationError } from '../security/encryption.errors.js';
+
+const WHATSAPP_JID_DOMAIN = 's.whatsapp.net';
+
+/**
+ * Canonicalizes a WhatsApp JID so the same person always maps to one lookup key.
+ * Strips the Baileys device suffix (`:NN`), lowercases the domain, and drops the
+ * leading `+`. Returns null for empty input.
+ */
+export const normalizeProviderJid = (jid) => {
+  const normalizedJid = normalizeOptionalString(jid, 'providerJid');
+
+  if (normalizedJid === null) {
+    return null;
+  }
+
+  const [userPart, domainPart] = normalizedJid.split('@');
+  const normalizedUser = userPart.split(':')[0].replace(/^\+/, '');
+  const normalizedDomain = (domainPart ?? WHATSAPP_JID_DOMAIN).toLowerCase();
+
+  if (normalizedUser === '') {
+    return null;
+  }
+
+  return `${normalizedUser}@${normalizedDomain}`;
+};
+
+/**
+ * Deterministic, non-reversible lookup key for a WhatsApp JID. Stored in an
+ * indexed contact field so returning senders resolve to one contact without
+ * storing or querying plaintext PII.
+ */
+export const computeContactProviderKey = (jid) =>
+  computeBlindIndex(normalizeProviderJid(jid), BLIND_INDEX_PURPOSES.CONTACT_PROVIDER_JID);
+
+/**
+ * Extracts the bare phone digits from a personal WhatsApp JID. Returns null for
+ * non-phone JIDs (for example `@lid` or `@g.us`).
+ */
+export const extractPhoneFromJid = (jid) => {
+  const normalizedJid = normalizeProviderJid(jid);
+
+  if (normalizedJid === null) {
+    return null;
+  }
+
+  const [userPart, domainPart] = normalizedJid.split('@');
+
+  if (domainPart !== WHATSAPP_JID_DOMAIN || !/^\d{8,15}$/.test(userPart)) {
+    return null;
+  }
+
+  return userPart;
+};
 
 export const PII_ENCRYPTION_PURPOSES = Object.freeze({
   CONTACT_PHONE: 'wam-crm-ai:v1:contact.encryptedPhone',

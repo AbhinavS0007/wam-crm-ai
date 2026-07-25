@@ -3,6 +3,37 @@ import { FollowUpTask } from './followup-task.model.js';
 
 export const createFollowUpTask = (taskData) => FollowUpTask.create(taskData);
 
+export const findFollowUpTaskById = ({ taskId, organizationId } = {}) =>
+  FollowUpTask.findOne({
+    _id: taskId,
+    organizationId,
+  }).exec();
+
+export const findFollowUpTasksByConversation = ({
+  organizationId,
+  conversationId,
+  status,
+  limit = 50,
+  skip = 0,
+} = {}) => {
+  const filter = {
+    organizationId,
+    conversationId,
+  };
+
+  if (status) {
+    filter.status = status;
+  }
+
+  return FollowUpTask.find(filter)
+    .sort({
+      dueAt: 1,
+    })
+    .skip(skip)
+    .limit(limit)
+    .exec();
+};
+
 export const findPendingTasksByUser = ({
   organizationId,
   assignedTo,

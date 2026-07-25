@@ -55,6 +55,12 @@ export const findTagBySlugInScope = ({ organizationId, whatsappAccountId = null,
     slug: normalizeTagSlug(slug),
   }).exec();
 
+export const findTagById = ({ tagId, organizationId } = {}) =>
+  Tag.findOne({
+    _id: tagId,
+    organizationId,
+  }).exec();
+
 export const archiveTag = ({ tagId, organizationId, actorId } = {}) =>
   Tag.findOneAndUpdate(
     {

@@ -100,6 +100,84 @@ export const findOrCreateContactByLeadId = async ({
   }
 };
 
+export const findContactByProviderKey = ({
+  organizationId,
+  providerContactKey,
+  includeEncrypted = false,
+} = {}) =>
+  withEncryptedFields(
+    Contact.findOne({
+      organizationId,
+      providerContactKey,
+    }),
+    includeEncrypted,
+  ).exec();
+
+export const findOrCreateContactByProviderKey = async ({
+  organizationId,
+  providerContactKey,
+  displayName,
+  profileName,
+  phone,
+  providerJids,
+  source = 'whatsapp',
+} = {}) => {
+  if (!providerContactKey) {
+    throw new Error('CONTACT_PROVIDER_KEY_REQUIRED');
+  }
+
+  const existingContact = await findContactByProviderKey({
+    organizationId,
+    providerContactKey,
+  });
+
+  if (existingContact) {
+    return {
+      contact: existingContact,
+      created: false,
+    };
+  }
+
+  const contactData = {
+    organizationId,
+    providerContactKey,
+    displayName,
+    profileName,
+    source,
+  };
+
+  if (phone !== undefined) {
+    contactData.encryptedPhone = encryptContactPhoneForStorage(phone);
+  }
+
+  if (providerJids !== undefined) {
+    contactData.encryptedProviderJids = encryptContactProviderJidsForStorage(providerJids);
+  }
+
+  try {
+    const contact = await createContact(contactData);
+
+    return {
+      contact,
+      created: true,
+    };
+  } catch (error) {
+    if (error?.code !== 11000) {
+      throw error;
+    }
+
+    const contact = await findContactByProviderKey({
+      organizationId,
+      providerContactKey,
+    });
+
+    return {
+      contact,
+      created: false,
+    };
+  }
+};
+
 export const setContactEncryptedPii = ({
   contactId,
   organizationId,

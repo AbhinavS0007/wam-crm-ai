@@ -17,6 +17,44 @@ export const findConversationById = ({ conversationId, organizationId } = {}) =>
   return Conversation.findOne(filter).exec();
 };
 
+export const listConversations = ({
+  organizationId,
+  whatsappAccountId,
+  assignedTo,
+  stage,
+  status,
+  limit = 50,
+  skip = 0,
+} = {}) => {
+  const filter = {
+    organizationId,
+  };
+
+  if (whatsappAccountId) {
+    filter.whatsappAccountId = whatsappAccountId;
+  }
+
+  if (assignedTo) {
+    filter.assignedTo = assignedTo;
+  }
+
+  if (stage) {
+    filter.stage = stage;
+  }
+
+  if (status) {
+    filter.status = status;
+  }
+
+  return Conversation.find(filter)
+    .sort({
+      updatedAt: -1,
+    })
+    .skip(skip)
+    .limit(limit)
+    .exec();
+};
+
 export const findConversationByAccountAndContact = ({
   organizationId,
   whatsappAccountId,
@@ -119,6 +157,40 @@ export const updateAssignment = ({
         lastHandledBy,
         lastHandledAt,
       }),
+    },
+    {
+      returnDocument: 'after',
+      runValidators: true,
+    },
+  ).exec();
+
+export const addTagToConversation = ({ conversationId, organizationId, tagId } = {}) =>
+  Conversation.findOneAndUpdate(
+    {
+      _id: conversationId,
+      organizationId,
+    },
+    {
+      $addToSet: {
+        tags: tagId,
+      },
+    },
+    {
+      returnDocument: 'after',
+      runValidators: true,
+    },
+  ).exec();
+
+export const removeTagFromConversation = ({ conversationId, organizationId, tagId } = {}) =>
+  Conversation.findOneAndUpdate(
+    {
+      _id: conversationId,
+      organizationId,
+    },
+    {
+      $pull: {
+        tags: tagId,
+      },
     },
     {
       returnDocument: 'after',

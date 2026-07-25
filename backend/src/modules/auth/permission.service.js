@@ -32,3 +32,11 @@ export const userHasEveryPermission = ({ user, permissions }) =>
       permission,
     }),
   );
+
+export const userHasAnyPermission = ({ user, permissions }) =>
+  permissions.some((permission) =>
+    userHasPermission({
+      user,
+      permission,
+    }),
+  );

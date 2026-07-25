@@ -16,6 +16,12 @@ export const getAllowedNoteVisibilityForRole = (role) => {
 
 export const createNote = (noteData) => Note.create(noteData);
 
+export const findNoteById = ({ noteId, organizationId } = {}) =>
+  Note.findOne({
+    _id: noteId,
+    organizationId,
+  }).exec();
+
 export const findNotesForConversationByVisibility = ({
   organizationId,
   conversationId,

@@ -59,6 +59,8 @@ const envSchema = z.object({
 
   ENCRYPTION_KEY_V3: z.string().optional(),
 
+  CONTACT_LOOKUP_HMAC_KEY: z.string().optional(),
+
   WHATSAPP_PROVIDER: z.enum(['baileys']).default('baileys'),
 
   WHATSAPP_ENABLED: booleanString.default(false),
@@ -72,6 +74,14 @@ const envSchema = z.object({
   WHATSAPP_SEND_TEXT_POC_ENABLED: booleanString.default(false),
 
   WHATSAPP_MAX_OUTBOUND_PER_MINUTE: z.coerce.number().int().min(1).max(20).default(5),
+
+  WHATSAPP_PERSIST_INBOUND_ENABLED: booleanString.default(false),
+
+  WHATSAPP_OUTBOUND_DELIVERY_ENABLED: booleanString.default(false),
+
+  WHATSAPP_OUTBOUND_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(10).default(3),
+
+  WHATSAPP_OUTBOUND_POLL_INTERVAL_MS: z.coerce.number().int().min(1000).max(60000).default(5000),
 });
 
 const result = envSchema.safeParse(process.env);

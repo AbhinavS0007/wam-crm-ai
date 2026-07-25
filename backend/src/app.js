@@ -4,7 +4,12 @@ import { env } from './config/env.js';
 import { notFoundHandler, errorHandler } from './middleware/error.middleware.js';
 import { requestContextMiddleware } from './middleware/request-context.middleware.js';
 import authRouter from './modules/auth/auth.routes.js';
+import contactRouter from './modules/contacts/contact.routes.js';
+import conversationRouter from './modules/conversations/conversation.routes.js';
+import followUpRouter from './modules/followups/followup.routes.js';
 import healthRouter from './modules/health/health.routes.js';
+import realtimeRouter from './modules/realtime/realtime.routes.js';
+import tagRouter from './modules/tags/tag.routes.js';
 import userRouter from './modules/users/user.routes.js';
 
 const app = express();
@@ -31,6 +36,11 @@ app.use(requestContextMiddleware);
 app.use('/api/v1/health', healthRouter);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', userRouter);
+app.use('/api/v1/conversations', conversationRouter);
+app.use('/api/v1/contacts', contactRouter);
+app.use('/api/v1/tags', tagRouter);
+app.use('/api/v1/follow-ups', followUpRouter);
+app.use('/api/v1/realtime', realtimeRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

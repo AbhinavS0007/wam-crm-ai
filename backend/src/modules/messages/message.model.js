@@ -150,6 +150,25 @@ const messageSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    deliveryAttempts: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
+    },
+
+    lastDeliveryError: {
+      type: String,
+      trim: true,
+      maxlength: 300,
+      default: null,
+    },
+
+    nextAttemptAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
