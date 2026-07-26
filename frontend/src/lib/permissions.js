@@ -5,6 +5,8 @@ export const PERMISSIONS = {
   CRM_TAGS_MANAGE: 'crm.tags.manage',
   CRM_TASKS_MANAGE: 'crm.tasks.manage',
   CLIENT_PII_REVEAL: 'client_pii.reveal',
+  ACCOUNTS_READ: 'accounts.read',
+  ACCOUNTS_MANAGE: 'accounts.manage',
 };
 
 export const NOTE_VISIBILITY = {

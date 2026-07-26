@@ -225,6 +225,13 @@ export const createBaileysProvider = ({
           return;
         }
 
+        // WhatsApp rejects a pairing-code request (HTTP 428, "Connection Closed") if it is
+        // issued before the socket has actually established its link. Wait a moment first.
+        const delayMs = Number(sessionInput.pairingCodeRequestDelayMs ?? 0);
+        if (delayMs > 0) {
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+        }
+
         try {
           const pairingCode = await socket.requestPairingCode(
             sanitizePairingPhoneNumber(sessionInput.pairingPhoneNumber),
@@ -241,6 +248,7 @@ export const createBaileysProvider = ({
             value: {
               provider: WHATSAPP_PROVIDER_NAMES.BAILEYS,
               pairingCodeAvailable: true,
+              pairingCode,
             },
           });
         } catch (error) {
@@ -286,7 +294,9 @@ export const createBaileysProvider = ({
           value: connectionUpdate,
         });
 
-        if (connectionUpdate.connection === 'connecting' || connectionUpdate.qr) {
+        // A QR event means WhatsApp is ready to link — the right moment to request a pairing
+        // code (adapts to the connection speed, unlike firing on the early "connecting" event).
+        if (connectionUpdate.qr) {
           void requestPairingCodeSafely();
         }
       });

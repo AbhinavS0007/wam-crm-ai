@@ -102,3 +102,42 @@ export const cancelFollowUp = ({ token, taskId }) =>
 
 export const revealPhone = ({ token, contactId }) =>
   apiFetch(`/contacts/${contactId}/reveal-phone`, { method: 'POST', token });
+
+// --- WhatsApp accounts (Phase 13) ---
+
+export const listAccounts = ({ token } = {}) => apiFetch('/whatsapp-accounts', { token });
+
+export const getAccount = ({ token, accountId }) =>
+  apiFetch(`/whatsapp-accounts/${accountId}`, { token });
+
+export const createAccount = ({ token, name, brandKey, description }) =>
+  apiFetch('/whatsapp-accounts', {
+    method: 'POST',
+    token,
+    body: { name, brandKey, description },
+  });
+
+export const connectAccount = ({ token, accountId, pairingPhoneNumber }) =>
+  apiFetch(`/whatsapp-accounts/${accountId}/connect`, {
+    method: 'POST',
+    token,
+    body: pairingPhoneNumber ? { pairingPhoneNumber } : {},
+  });
+
+export const getAccountQr = ({ token, accountId }) =>
+  apiFetch(`/whatsapp-accounts/${accountId}/qr`, { token });
+
+export const pauseAccount = ({ token, accountId }) =>
+  apiFetch(`/whatsapp-accounts/${accountId}/pause`, { method: 'POST', token });
+
+export const resumeAccount = ({ token, accountId }) =>
+  apiFetch(`/whatsapp-accounts/${accountId}/resume`, { method: 'POST', token });
+
+export const resetAccount = ({ token, accountId }) =>
+  apiFetch(`/whatsapp-accounts/${accountId}/reset`, { method: 'POST', token });
+
+export const disconnectAccount = ({ token, accountId }) =>
+  apiFetch(`/whatsapp-accounts/${accountId}/disconnect`, { method: 'POST', token });
+
+export const removeAccount = ({ token, accountId }) =>
+  apiFetch(`/whatsapp-accounts/${accountId}`, { method: 'DELETE', token });

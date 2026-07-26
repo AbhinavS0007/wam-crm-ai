@@ -2,6 +2,7 @@ export const REALTIME_CHANNEL = 'realtime:events';
 
 export const REALTIME_EVENT_TYPES = Object.freeze({
   CONVERSATION_CHANGED: 'conversation.changed',
+  ACCOUNT_CHANGED: 'account.changed',
 });
 
 export const REALTIME_REASONS = Object.freeze({

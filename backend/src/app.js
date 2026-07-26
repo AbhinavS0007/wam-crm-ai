@@ -11,6 +11,7 @@ import healthRouter from './modules/health/health.routes.js';
 import realtimeRouter from './modules/realtime/realtime.routes.js';
 import tagRouter from './modules/tags/tag.routes.js';
 import userRouter from './modules/users/user.routes.js';
+import whatsappAccountRouter from './modules/whatsapp-accounts/whatsapp-account.routes.js';
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use('/api/v1/conversations', conversationRouter);
 app.use('/api/v1/contacts', contactRouter);
 app.use('/api/v1/tags', tagRouter);
 app.use('/api/v1/follow-ups', followUpRouter);
+app.use('/api/v1/whatsapp-accounts', whatsappAccountRouter);
 app.use('/api/v1/realtime', realtimeRouter);
 
 app.use(notFoundHandler);

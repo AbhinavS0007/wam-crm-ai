@@ -35,3 +35,34 @@ export const publishConversationChanged = async (
     return false;
   }
 };
+
+/**
+ * Publishes an org-wide "a WhatsApp account changed" signal (status/lifecycle). Non-PII;
+ * best-effort like publishConversationChanged.
+ */
+export const publishAccountChanged = async (
+  { organizationId, accountId, status } = {},
+  { redisClient = getRedisClient() } = {},
+) => {
+  if (!organizationId || !accountId) {
+    return false;
+  }
+
+  const event = {
+    type: REALTIME_EVENT_TYPES.ACCOUNT_CHANGED,
+    organizationId: toIdString(organizationId),
+    accountId: toIdString(accountId),
+    status: status ?? null,
+  };
+
+  try {
+    if (!redisClient?.isReady) {
+      return false;
+    }
+
+    await redisClient.publish(REALTIME_CHANNEL, JSON.stringify(event));
+    return true;
+  } catch {
+    return false;
+  }
+};

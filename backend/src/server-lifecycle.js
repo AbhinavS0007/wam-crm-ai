@@ -6,6 +6,10 @@ import {
   startRealtimeSubscriber,
   stopRealtimeSubscriber,
 } from './modules/realtime/realtime.hub.js';
+import { createDeliveryRunner } from './modules/whatsapp/delivery/delivery-runner.js';
+import { getSessionManager } from './modules/whatsapp/sessions/session-manager.instance.js';
+
+let deliveryRunner = null;
 
 const listenForRequests = ({ appInstance, port }) =>
   new Promise((resolve, reject) => {
@@ -65,6 +69,9 @@ export const startServer = async ({
     await connectRedisFn();
     await startRealtimeSubscriberFn();
 
+    deliveryRunner = createDeliveryRunner();
+    deliveryRunner.start();
+
     return await listenForRequests({
       appInstance,
       port,
@@ -85,6 +92,9 @@ export const stopServer = async ({
   let httpServerError = null;
 
   try {
+    deliveryRunner?.stop();
+    deliveryRunner = null;
+    await getSessionManager().stopAll();
     await stopRealtimeSubscriberFn();
     await closeHttpServer(server);
   } catch (error) {

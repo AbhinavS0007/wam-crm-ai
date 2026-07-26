@@ -1,6 +1,6 @@
 import { PERMISSIONS } from '../../constants/permissions.js';
 import { getRedisClient } from '../../config/redis.js';
-import { REALTIME_CHANNEL } from './realtime.events.js';
+import { REALTIME_CHANNEL, REALTIME_EVENT_TYPES } from './realtime.events.js';
 
 const clients = new Set();
 let subscriberClient = null;
@@ -17,6 +17,11 @@ export const shouldDeliverToClient = ({ event, client }) => {
 
   if (event.organizationId !== client.organizationId) {
     return false;
+  }
+
+  // Account status events carry no conversation/assignment; deliver to the whole org.
+  if (event.type === REALTIME_EVENT_TYPES.ACCOUNT_CHANGED) {
+    return true;
   }
 
   if (client.canReadAll) {

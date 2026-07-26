@@ -186,3 +186,7 @@ export const requireClientPiiReveal = requirePermissions(PERMISSIONS.CLIENT_PII_
 export const requireCrmTasksManage = requirePermissions(PERMISSIONS.CRM_TASKS_MANAGE);
 
 export const requireCrmTagsManage = requirePermissions(PERMISSIONS.CRM_TAGS_MANAGE);
+
+export const requireAccountsRead = requirePermissions(PERMISSIONS.ACCOUNTS_READ);
+
+export const requireAccountsManage = requirePermissions(PERMISSIONS.ACCOUNTS_MANAGE);

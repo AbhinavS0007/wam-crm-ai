@@ -53,7 +53,7 @@ describe('Baileys provider pairing-code fallback', () => {
     expect(requestPairingCode).not.toHaveBeenCalled();
 
     await handlers.get('connection.update')({
-      connection: 'connecting',
+      qr: 'PAIRING_READY_QR',
     });
 
     expect(requestPairingCode).toHaveBeenCalledWith('919876543210');
@@ -63,6 +63,7 @@ describe('Baileys provider pairing-code fallback', () => {
     expect(onPairingCode).toHaveBeenCalledWith({
       provider: 'baileys',
       pairingCodeAvailable: true,
+      pairingCode: '1234-5678',
     });
   });
 
@@ -109,11 +110,11 @@ describe('Baileys provider pairing-code fallback', () => {
     });
 
     await handlers.get('connection.update')({
-      connection: 'connecting',
+      qr: 'PAIRING_READY_QR',
     });
 
     await handlers.get('connection.update')({
-      connection: 'connecting',
+      qr: 'PAIRING_READY_QR',
     });
 
     await handlers.get('connection.update')({
@@ -177,7 +178,7 @@ describe('Baileys provider pairing-code fallback', () => {
     });
 
     await handlers.get('connection.update')({
-      connection: 'connecting',
+      qr: 'PAIRING_READY_QR',
     });
 
     expect(onPairingCodeError).toHaveBeenCalledWith({

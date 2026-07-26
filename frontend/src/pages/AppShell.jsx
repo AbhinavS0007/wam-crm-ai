@@ -5,19 +5,46 @@ import ConversationView from '../components/ConversationView.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { getInitials } from '../lib/format.js';
+import { hasPermission, PERMISSIONS } from '../lib/permissions.js';
+import AccountsPage from './AccountsPage.jsx';
+
+const NavButton = ({ active, onClick, children }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    aria-current={active}
+    className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+      active ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'
+    }`}
+  >
+    {children}
+  </button>
+);
 
 const AppShell = () => {
-  const { user, organization, logout } = useAuth();
+  const { user, organization, logout, permissions } = useAuth();
+  const [view, setView] = useState('inbox');
   const [selectedId, setSelectedId] = useState(null);
+  const canReadAccounts = hasPermission(permissions, PERMISSIONS.ACCOUNTS_READ);
 
   return (
     <div className="flex h-screen flex-col bg-slate-100">
       <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <span className="text-sm font-bold text-blue-600">WAM CRM AI</span>
           {organization?.name ? (
             <span className="text-sm text-slate-400">· {organization.name}</span>
           ) : null}
+          <nav className="flex items-center gap-1">
+            <NavButton active={view === 'inbox'} onClick={() => setView('inbox')}>
+              Inbox
+            </NavButton>
+            {canReadAccounts ? (
+              <NavButton active={view === 'accounts'} onClick={() => setView('accounts')}>
+                Accounts
+              </NavButton>
+            ) : null}
+          </nav>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
@@ -36,19 +63,25 @@ const AppShell = () => {
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1">
-        <ConversationList selectedId={selectedId} onSelect={setSelectedId} />
-        {selectedId ? (
-          <ConversationView key={selectedId} conversationId={selectedId} />
-        ) : (
-          <div className="flex-1">
-            <EmptyState
-              title="Select a conversation"
-              description="Choose a conversation from the list to view its thread."
-            />
-          </div>
-        )}
-      </div>
+      {view === 'accounts' && canReadAccounts ? (
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <AccountsPage />
+        </div>
+      ) : (
+        <div className="flex min-h-0 flex-1">
+          <ConversationList selectedId={selectedId} onSelect={setSelectedId} />
+          {selectedId ? (
+            <ConversationView key={selectedId} conversationId={selectedId} />
+          ) : (
+            <div className="flex-1">
+              <EmptyState
+                title="Select a conversation"
+                description="Choose a conversation from the list to view its thread."
+              />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
