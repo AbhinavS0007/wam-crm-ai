@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createBaileysProvider } from '../src/modules/whatsapp/providers/baileys.provider.js';
+import {
+  createBaileysProvider,
+  normalizeBaileysInboundMessage,
+} from '../src/modules/whatsapp/providers/baileys.provider.js';
 
 const createProviderTestHarness = ({ socketOverrides = {} } = {}) => {
   const eventHandlers = {};
@@ -214,5 +217,28 @@ describe('Baileys provider runtime boundary', () => {
         textPreview: 'Hello inbound',
       },
     });
+  });
+});
+
+describe('normalizeBaileysInboundMessage sender resolution', () => {
+  // Newer WhatsApp/LID direct messages arrive with an `@lid` remoteJid and an empty-string
+  // `participant`. The sender must fall back to remoteJid (|| not ??), otherwise ingestion
+  // rejects the message as "sender missing" and the chat never reaches the inbox.
+  it('falls back to remoteJid when participant is an empty string (LID direct message)', () => {
+    const normalized = normalizeBaileysInboundMessage({
+      key: {
+        remoteJid: '1779999311@lid',
+        participant: '',
+        fromMe: false,
+        id: 'lid-message-id',
+      },
+      pushName: 'LID Sender',
+      message: { conversation: 'Hi from a LID number' },
+      messageTimestamp: 456,
+    });
+
+    expect(normalized).not.toBeNull();
+    expect(normalized.senderJid).toBe('1779999311@lid');
+    expect(normalized.remoteJid).toBe('1779999311@lid');
   });
 });

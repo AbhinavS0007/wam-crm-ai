@@ -129,7 +129,9 @@ export const normalizeBaileysInboundMessage = (message = {}) => {
     eventType: 'message.received',
     messageId: message.key?.id ?? null,
     remoteJid,
-    senderJid: message.key?.participant ?? remoteJid,
+    // Use participant only when it is a non-empty value; newer WhatsApp/LID direct
+    // messages set `participant` to '' which must fall back to remoteJid (|| not ??).
+    senderJid: message.key?.participant || remoteJid,
     pushName: message.pushName ?? null,
     text,
     timestamp: message.messageTimestamp ?? null,
