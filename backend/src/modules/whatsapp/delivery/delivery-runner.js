@@ -14,6 +14,14 @@ export const createDeliveryRunner = ({
   config = env,
   sessionManager = getSessionManager(),
   now = () => new Date(),
+  createDeliveryService = ({ accountId }) =>
+    createOutboundDeliveryService({
+      config,
+      now,
+      sessionService: {
+        sendTextMessage: ({ to, text }) => sessionManager.sendTextMessage({ accountId, to, text }),
+      },
+    }),
 } = {}) => {
   let timer = null;
   let running = false;
@@ -44,14 +52,7 @@ export const createDeliveryRunner = ({
           continue;
         }
 
-        const deliveryService = createOutboundDeliveryService({
-          config,
-          now,
-          sessionService: {
-            sendTextMessage: ({ to, text }) =>
-              sessionManager.sendTextMessage({ accountId, to, text }),
-          },
-        });
+        const deliveryService = createDeliveryService({ accountId });
 
         await deliveryService.drainQueue({ organizationId, whatsappAccountId: accountId });
       }

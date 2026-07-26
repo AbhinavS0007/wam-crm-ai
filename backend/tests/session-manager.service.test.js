@@ -29,8 +29,9 @@ const createManager = (overrides = {}) => {
   const manager = createWhatsAppSessionManager({
     config: createConfig(),
     provider,
-    accountRepository: {
+    accountRepository: overrides.accountRepository ?? {
       findAccountById: vi.fn(async () => ACCOUNT),
+      findAccountsByStatuses: vi.fn(async () => []),
       updateAccountStatus: vi.fn(async (u) => {
         updates.push(u);
         return { ...ACCOUNT, status: u.status };
@@ -61,6 +62,65 @@ describe('WhatsApp session manager', () => {
     expect(state.running).toBe(true);
     expect(updates[0].status).toBe(ACCOUNT_STATUSES.CONNECTING);
     expect(manager.getSessionState(ACCOUNT._id).running).toBe(true);
+  });
+
+  it('exposes organizationId and accountId in runtime state (so delivery can drain)', async () => {
+    const { manager } = createManager();
+    await manager.connectAccount({ account: ACCOUNT });
+
+    const state = manager.getSessionState(ACCOUNT._id);
+    expect(state.accountId).toBe(ACCOUNT._id.toString());
+    expect(state.organizationId).toBe(ACCOUNT.organizationId.toString());
+
+    const [runtime] = manager.listRuntimeStates();
+    expect(runtime.organizationId).toBe(ACCOUNT.organizationId.toString());
+  });
+
+  it('reconnects persisted sessions on startup for each active account', async () => {
+    const accounts = [
+      { _id: 'acc-1', organizationId: 'org-1', status: ACCOUNT_STATUSES.ACTIVE },
+      { _id: 'acc-2', organizationId: 'org-2', status: ACCOUNT_STATUSES.RECONNECTING },
+    ];
+    const findAccountsByStatuses = vi.fn(async () => accounts);
+    const { manager, provider } = createManager({
+      accountRepository: {
+        findAccountById: vi.fn(async () => accounts[0]),
+        findAccountsByStatuses,
+        updateAccountStatus: vi.fn(async () => ({})),
+      },
+    });
+
+    const result = await manager.reconnectPersistedSessions();
+
+    expect(findAccountsByStatuses).toHaveBeenCalledWith({
+      statuses: [
+        ACCOUNT_STATUSES.ACTIVE,
+        ACCOUNT_STATUSES.RECONNECTING,
+        ACCOUNT_STATUSES.CONNECTING,
+      ],
+    });
+    expect(provider.createSession).toHaveBeenCalledTimes(2);
+    expect(result.reconnected).toBe(2);
+    expect(manager.getSessionState('acc-1').running).toBe(true);
+    expect(manager.getSessionState('acc-2').running).toBe(true);
+  });
+
+  it('skips startup reconnect when WhatsApp is disabled', async () => {
+    const findAccountsByStatuses = vi.fn(async () => []);
+    const { manager, provider } = createManager({
+      config: createConfig({ WHATSAPP_ENABLED: false }),
+      accountRepository: {
+        findAccountById: vi.fn(async () => ACCOUNT),
+        findAccountsByStatuses,
+        updateAccountStatus: vi.fn(async () => ({})),
+      },
+    });
+
+    const result = await manager.reconnectPersistedSessions();
+
+    expect(result.skipped).toBe(true);
+    expect(findAccountsByStatuses).not.toHaveBeenCalled();
+    expect(provider.createSession).not.toHaveBeenCalled();
   });
 
   it('captures the QR from the connection update and exposes a data URL', async () => {

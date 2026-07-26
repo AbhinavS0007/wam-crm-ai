@@ -46,6 +46,7 @@ describe('server lifecycle', () => {
       connectRedisFn,
       disconnectDatabaseFn: vi.fn(),
       disconnectRedisFn: vi.fn(),
+      reconnectSessionsFn: vi.fn(async () => ({ reconnected: 0 })),
     });
 
     expect(result).toBe(server);

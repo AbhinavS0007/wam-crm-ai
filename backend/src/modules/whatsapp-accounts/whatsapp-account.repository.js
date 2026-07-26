@@ -56,6 +56,26 @@ export const findAccountsByOrganization = ({
     .exec();
 };
 
+/**
+ * Finds accounts across all organizations whose status is one of `statuses`. Used on server
+ * startup to restore sessions for numbers that were connected before the process stopped.
+ */
+export const findAccountsByStatuses = ({ statuses = [] } = {}) => {
+  if (!Array.isArray(statuses) || statuses.length === 0) {
+    return Promise.resolve([]);
+  }
+
+  return WhatsAppAccount.find({
+    status: {
+      $in: statuses,
+    },
+  })
+    .sort({
+      updatedAt: -1,
+    })
+    .exec();
+};
+
 export const updateAccountStatus = ({
   accountId,
   organizationId,

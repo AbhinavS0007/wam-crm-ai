@@ -4,6 +4,7 @@ import { env } from '../../../config/env.js';
 import { ACCOUNT_STATUSES } from '../../../constants/account-statuses.js';
 import {
   findAccountById as defaultFindAccountById,
+  findAccountsByStatuses as defaultFindAccountsByStatuses,
   updateAccountStatus as defaultUpdateAccountStatus,
 } from '../../whatsapp-accounts/whatsapp-account.repository.js';
 import { publishAccountChanged as defaultPublishAccountChanged } from '../../realtime/realtime.publisher.js';
@@ -33,6 +34,7 @@ export const createWhatsAppSessionManager = ({
   provider = createBaileysProvider(),
   accountRepository = {
     findAccountById: defaultFindAccountById,
+    findAccountsByStatuses: defaultFindAccountsByStatuses,
     updateAccountStatus: defaultUpdateAccountStatus,
   },
   inboundMessageService = null,
@@ -59,6 +61,7 @@ export const createWhatsAppSessionManager = ({
     return {
       running: true,
       accountId: session.accountId,
+      organizationId: session.organizationId,
       status: session.status,
       qrAvailable: Boolean(session.latestQr),
       pairingCodeAvailable: Boolean(session.latestPairingCode),
@@ -338,6 +341,47 @@ export const createWhatsAppSessionManager = ({
     return serializeState(null);
   };
 
+  // On startup, restore sessions for accounts that were connected before the process stopped.
+  // Baileys reuses each account's saved encrypted auth-state, so a still-valid link reconnects
+  // with no QR; a revoked one simply lands on DISCONNECTED. Best-effort and never throws.
+  const reconnectPersistedSessions = async () => {
+    if (!asBoolean(config.WHATSAPP_ENABLED)) {
+      return { reconnected: 0, skipped: true };
+    }
+
+    let accounts;
+    try {
+      accounts = await accountRepository.findAccountsByStatuses({
+        statuses: [
+          ACCOUNT_STATUSES.ACTIVE,
+          ACCOUNT_STATUSES.RECONNECTING,
+          ACCOUNT_STATUSES.CONNECTING,
+        ],
+      });
+    } catch (error) {
+      console.error('Session-manager startup reconnect lookup failed safely.', {
+        code: error?.code,
+        name: error?.name,
+      });
+      return { reconnected: 0, skipped: false };
+    }
+
+    let reconnected = 0;
+    for (const account of accounts ?? []) {
+      try {
+        await connectAccount({ account });
+        reconnected += 1;
+      } catch (error) {
+        console.error('Session-manager startup reconnect failed safely.', {
+          code: error?.code,
+          name: error?.name,
+        });
+      }
+    }
+
+    return { reconnected, skipped: false };
+  };
+
   const stopAll = async () => {
     const running = [...sessions.values()];
     sessions.clear();
@@ -353,6 +397,7 @@ export const createWhatsAppSessionManager = ({
     getPairingCode,
     getSessionState,
     listRuntimeStates,
+    reconnectPersistedSessions,
     sendTextMessage,
     stopAll,
   };

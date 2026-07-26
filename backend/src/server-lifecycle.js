@@ -63,6 +63,7 @@ export const startServer = async ({
   disconnectDatabaseFn = disconnectDatabase,
   disconnectRedisFn = disconnectRedis,
   startRealtimeSubscriberFn = startRealtimeSubscriber,
+  reconnectSessionsFn = () => getSessionManager().reconnectPersistedSessions(),
 } = {}) => {
   try {
     await connectDatabaseFn();
@@ -71,6 +72,17 @@ export const startServer = async ({
 
     deliveryRunner = createDeliveryRunner();
     deliveryRunner.start();
+
+    // Restore sessions for accounts that were connected before the process stopped. Best-effort:
+    // a reconnect failure must never prevent the server from coming up.
+    try {
+      await reconnectSessionsFn();
+    } catch (error) {
+      console.error('Startup session reconnect failed safely.', {
+        code: error?.code,
+        name: error?.name,
+      });
+    }
 
     return await listenForRequests({
       appInstance,
