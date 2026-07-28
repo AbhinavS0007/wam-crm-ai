@@ -4,9 +4,23 @@ export const PERMISSIONS = {
   MESSAGES_SEND: 'messages.send',
   CRM_TAGS_MANAGE: 'crm.tags.manage',
   CRM_TASKS_MANAGE: 'crm.tasks.manage',
+  CRM_STAGE_MANAGE: 'crm.stage.manage',
   CLIENT_PII_REVEAL: 'client_pii.reveal',
   ACCOUNTS_READ: 'accounts.read',
   ACCOUNTS_MANAGE: 'accounts.manage',
+  USERS_READ: 'users.read',
+  USERS_MANAGE: 'users.manage',
+};
+
+// Roles an admin can assign. `super_admin` is deliberately absent — the backend rejects it
+// (see assignableRoleSchema in user.validation.js).
+export const ASSIGNABLE_ROLES = ['admin', 'manager', 'staff'];
+
+export const ROLE_LABELS = {
+  super_admin: 'Super admin',
+  admin: 'Admin',
+  manager: 'Manager',
+  staff: 'Staff',
 };
 
 export const NOTE_VISIBILITY = {

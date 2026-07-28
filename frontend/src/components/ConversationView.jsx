@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { getConversation, getMessages, sendMessage } from '../api/endpoints.js';
+import { getConversation, getMessages, listStages, sendMessage } from '../api/endpoints.js';
 import { useAuth } from '../auth/AuthContext.jsx';
+import { findStageByKey, mergeStages } from '../lib/stages.js';
 import { useRealtime } from '../realtime/RealtimeProvider.jsx';
 import EmptyState from './EmptyState.jsx';
 import LeadPanel from './lead/LeadPanel.jsx';
@@ -35,6 +36,15 @@ const ConversationView = ({ conversationId }) => {
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [stageOverride, setStageOverride] = useState(null);
+  const [stages, setStages] = useState(mergeStages());
+
+  useEffect(() => {
+    // Needed to resolve a custom stage's label/color for the header badge; built-ins already
+    // render correctly on their own, so a failure here is silently non-fatal.
+    authedRequest((token) => listStages({ token }))
+      .then((payload) => setStages(mergeStages(payload?.data ?? [])))
+      .catch(() => {});
+  }, [authedRequest]);
 
   const loadInitial = useCallback(async () => {
     try {
@@ -163,7 +173,11 @@ const ConversationView = ({ conversationId }) => {
             <p className="text-xs text-slate-400">{conversation?.leadId}</p>
           </div>
           <div className="flex items-center gap-3">
-            <StageBadge stage={effectiveStage} />
+            <StageBadge
+              stage={effectiveStage}
+              label={findStageByKey(stages, effectiveStage)?.label}
+              color={findStageByKey(stages, effectiveStage)?.color}
+            />
             <button
               type="button"
               onClick={() => setDetailsOpen((open) => !open)}

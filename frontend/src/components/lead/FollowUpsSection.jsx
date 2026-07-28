@@ -146,7 +146,7 @@ const FollowUpsSection = ({ conversationId }) => {
         </p>
       ) : null}
       {!loading && tasks.length === 0 ? (
-        <EmptyState title="No follow-ups" description="Schedule one above." />
+        <EmptyState compact title="No follow-ups" description="Schedule one above." />
       ) : null}
 
       <ul className="space-y-2">

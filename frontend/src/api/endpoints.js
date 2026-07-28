@@ -56,6 +56,13 @@ export const changeStage = ({ token, conversationId, stage }) =>
     body: { stage },
   });
 
+export const assignConversation = ({ token, conversationId, assignedTo }) =>
+  apiFetch(`/conversations/${conversationId}/assignment`, {
+    method: 'PATCH',
+    token,
+    body: { assignedTo },
+  });
+
 export const getActivity = ({ token, conversationId, limit } = {}) =>
   apiFetch(`/conversations/${conversationId}/activity${buildQuery({ limit })}`, { token });
 
@@ -83,6 +90,21 @@ export const attachTag = ({ token, conversationId, tagId }) =>
 
 export const detachTag = ({ token, conversationId, tagId }) =>
   apiFetch(`/conversations/${conversationId}/tags/${tagId}`, { method: 'DELETE', token });
+
+export const listStages = ({ token } = {}) => apiFetch('/stages', { token });
+
+export const createStage = ({ token, label, key, color }) =>
+  apiFetch('/stages', {
+    method: 'POST',
+    token,
+    body: { label, key, color },
+  });
+
+export const archiveStage = ({ token, stageId }) =>
+  apiFetch(`/stages/${stageId}/archive`, { method: 'PATCH', token });
+
+export const deleteStage = ({ token, stageId }) =>
+  apiFetch(`/stages/${stageId}`, { method: 'DELETE', token });
 
 export const listConversationFollowUps = ({ token, conversationId } = {}) =>
   apiFetch(`/conversations/${conversationId}/follow-ups`, { token });
@@ -141,3 +163,46 @@ export const disconnectAccount = ({ token, accountId }) =>
 
 export const removeAccount = ({ token, accountId }) =>
   apiFetch(`/whatsapp-accounts/${accountId}`, { method: 'DELETE', token });
+
+// --- Team / users (Phase 15) ---
+
+export const listUsers = ({ token, role, status, limit, skip } = {}) =>
+  apiFetch(`/users${buildQuery({ role, status, limit, skip })}`, { token });
+
+export const createUser = ({
+  token,
+  name,
+  email,
+  password,
+  role,
+  accountAccessMode = 'all',
+  mustChangePassword = true,
+}) =>
+  apiFetch('/users', {
+    method: 'POST',
+    token,
+    body: { name, email, password, role, accountAccessMode, mustChangePassword },
+  });
+
+export const updateUser = ({ token, userId, ...changes }) =>
+  apiFetch(`/users/${userId}`, { method: 'PATCH', token, body: changes });
+
+export const disableUser = ({ token, userId }) =>
+  apiFetch(`/users/${userId}/disable`, { method: 'PATCH', token });
+
+export const enableUser = ({ token, userId }) =>
+  apiFetch(`/users/${userId}/enable`, { method: 'PATCH', token });
+
+export const resetUserPassword = ({ token, userId, password, mustChangePassword = true }) =>
+  apiFetch(`/users/${userId}/reset-password`, {
+    method: 'PATCH',
+    token,
+    body: { password, mustChangePassword },
+  });
+
+export const changePassword = ({ token, currentPassword, newPassword }) =>
+  apiFetch('/auth/change-password', {
+    method: 'POST',
+    token,
+    body: { currentPassword, newPassword },
+  });

@@ -75,7 +75,7 @@ describe('inbox and thread', () => {
 
     const [riyaRow] = await screen.findAllByText('Riya Sharma');
     expect(riyaRow).toBeInTheDocument();
-    expect(screen.getByText('qualified')).toBeInTheDocument();
+    expect(screen.getByText('Qualified')).toBeInTheDocument();
     expect(screen.getByLabelText('3 unread')).toBeInTheDocument();
 
     fireEvent.click(riyaRow);

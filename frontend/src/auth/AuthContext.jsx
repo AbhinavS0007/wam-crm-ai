@@ -119,6 +119,14 @@ export const AuthProvider = ({ children }) => {
     [applyAuth, clearAuth],
   );
 
+  /**
+   * Replaces the cached profile without a round trip — used after the user changes their own
+   * password, so the refreshed `mustChangePassword: false` clears the forced-change gate.
+   */
+  const applyUser = useCallback((nextUser) => {
+    setAuth((current) => ({ ...current, user: nextUser ?? current.user }));
+  }, []);
+
   const value = useMemo(
     () => ({
       ...auth,
@@ -127,8 +135,9 @@ export const AuthProvider = ({ children }) => {
       login,
       logout,
       authedRequest,
+      applyUser,
     }),
-    [auth, bootstrapping, login, logout, authedRequest],
+    [auth, bootstrapping, login, logout, authedRequest, applyUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

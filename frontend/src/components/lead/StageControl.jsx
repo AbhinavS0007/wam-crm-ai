@@ -1,14 +1,35 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import { changeStage } from '../../api/endpoints.js';
+import { changeStage, listStages } from '../../api/endpoints.js';
 import { useAuth } from '../../auth/AuthContext.jsx';
-
-const STAGES = ['new', 'contacted', 'qualified', 'proposal', 'won', 'lost', 'closed'];
+import { BUILTIN_STAGES, mergeStages } from '../../lib/stages.js';
 
 const StageControl = ({ conversationId, stage, onStageChange }) => {
   const { authedRequest } = useAuth();
+  const [stages, setStages] = useState(mergeStages());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+
+  const loadStages = useCallback(async () => {
+    try {
+      const payload = await authedRequest((token) => listStages({ token, status: 'active' }));
+      setStages(mergeStages(payload?.data ?? []));
+    } catch {
+      // Falls back to the built-ins only; the picker still works, just without custom stages.
+    }
+  }, [authedRequest]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadStages();
+  }, [loadStages]);
+
+  // The conversation's current stage might have since been archived — keep it selectable so the
+  // dropdown doesn't silently fall back to a different value out from under the user.
+  const options =
+    stage && !stages.some((option) => option.key === stage)
+      ? [...stages, { key: stage, label: stage }]
+      : stages;
 
   const handleChange = async (event) => {
     const nextStage = event.target.value;
@@ -37,14 +58,14 @@ const StageControl = ({ conversationId, stage, onStageChange }) => {
       </label>
       <select
         id="lead-stage"
-        value={stage ?? 'new'}
+        value={stage ?? BUILTIN_STAGES[0].key}
         onChange={handleChange}
         disabled={saving}
-        className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm capitalize text-slate-900 focus:border-blue-500 focus:outline-none disabled:opacity-60"
+        className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm text-slate-900 focus:border-blue-500 focus:outline-none disabled:opacity-60"
       >
-        {STAGES.map((option) => (
-          <option key={option} value={option}>
-            {option}
+        {options.map((option) => (
+          <option key={option.key} value={option.key}>
+            {option.label}
           </option>
         ))}
       </select>

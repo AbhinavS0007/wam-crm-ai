@@ -109,7 +109,7 @@ const NotesSection = ({ conversationId }) => {
         </p>
       ) : null}
       {!loading && notes.length === 0 ? (
-        <EmptyState title="No notes" description="Add the first note above." />
+        <EmptyState compact title="No notes" description="Add the first note above." />
       ) : null}
 
       <ul className="space-y-2">

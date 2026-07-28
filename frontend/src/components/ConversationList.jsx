@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { listConversations } from '../api/endpoints.js';
+import { listConversations, listStages } from '../api/endpoints.js';
 import { useAuth } from '../auth/AuthContext.jsx';
+import { findStageByKey, mergeStages } from '../lib/stages.js';
 import { useRealtime } from '../realtime/RealtimeProvider.jsx';
 import EmptyState from './EmptyState.jsx';
 import RelativeTime from './RelativeTime.jsx';
@@ -15,6 +16,7 @@ const ConversationList = ({ selectedId, onSelect }) => {
   const { authedRequest } = useAuth();
   const { subscribe } = useRealtime();
   const [conversations, setConversations] = useState([]);
+  const [stages, setStages] = useState(mergeStages());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -37,6 +39,14 @@ const ConversationList = ({ selectedId, onSelect }) => {
     const timer = setInterval(load, POLL_INTERVAL_MS);
     return () => clearInterval(timer);
   }, [load]);
+
+  useEffect(() => {
+    // Needed to resolve a custom stage's label/color for the badge below; the built-ins alone
+    // already render correctly, so a failure here is silently non-fatal.
+    authedRequest((token) => listStages({ token }))
+      .then((payload) => setStages(mergeStages(payload?.data ?? [])))
+      .catch(() => {});
+  }, [authedRequest]);
 
   // Realtime: refetch the inbox whenever any conversation changes.
   useEffect(() => subscribe(() => load()), [subscribe, load]);
@@ -103,7 +113,11 @@ const ConversationList = ({ selectedId, onSelect }) => {
                     </span>
                     <UnreadBadge count={conversation.unreadCount} />
                   </div>
-                  <StageBadge stage={conversation.stage} />
+                  <StageBadge
+                    stage={conversation.stage}
+                    label={findStageByKey(stages, conversation.stage)?.label}
+                    color={findStageByKey(stages, conversation.stage)?.color}
+                  />
                 </button>
               </li>
             );

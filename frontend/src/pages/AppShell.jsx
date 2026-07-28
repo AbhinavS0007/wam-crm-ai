@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import ChangePasswordGate from '../components/ChangePasswordGate.jsx';
 import ConversationList from '../components/ConversationList.jsx';
 import ConversationView from '../components/ConversationView.jsx';
 import EmptyState from '../components/EmptyState.jsx';
@@ -7,6 +8,8 @@ import { useAuth } from '../auth/AuthContext.jsx';
 import { getInitials } from '../lib/format.js';
 import { hasPermission, PERMISSIONS } from '../lib/permissions.js';
 import AccountsPage from './AccountsPage.jsx';
+import StagesPage from './StagesPage.jsx';
+import TeamPage from './TeamPage.jsx';
 
 const NavButton = ({ active, onClick, children }) => (
   <button
@@ -26,6 +29,14 @@ const AppShell = () => {
   const [view, setView] = useState('inbox');
   const [selectedId, setSelectedId] = useState(null);
   const canReadAccounts = hasPermission(permissions, PERMISSIONS.ACCOUNTS_READ);
+  const canReadUsers = hasPermission(permissions, PERMISSIONS.USERS_READ);
+  const canManageStages = hasPermission(permissions, PERMISSIONS.CRM_STAGE_MANAGE);
+
+  // A temporary password must be replaced before anything else is reachable. The backend
+  // enforces this too, so this is UX rather than the security boundary.
+  if (user?.mustChangePassword) {
+    return <ChangePasswordGate />;
+  }
 
   return (
     <div className="flex h-screen flex-col bg-slate-100">
@@ -42,6 +53,16 @@ const AppShell = () => {
             {canReadAccounts ? (
               <NavButton active={view === 'accounts'} onClick={() => setView('accounts')}>
                 Accounts
+              </NavButton>
+            ) : null}
+            {canReadUsers ? (
+              <NavButton active={view === 'team'} onClick={() => setView('team')}>
+                Team
+              </NavButton>
+            ) : null}
+            {canManageStages ? (
+              <NavButton active={view === 'stages'} onClick={() => setView('stages')}>
+                Stages
               </NavButton>
             ) : null}
           </nav>
@@ -66,6 +87,14 @@ const AppShell = () => {
       {view === 'accounts' && canReadAccounts ? (
         <div className="min-h-0 flex-1 overflow-y-auto">
           <AccountsPage />
+        </div>
+      ) : view === 'team' && canReadUsers ? (
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <TeamPage />
+        </div>
+      ) : view === 'stages' && canManageStages ? (
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <StagesPage />
         </div>
       ) : (
         <div className="flex min-h-0 flex-1">

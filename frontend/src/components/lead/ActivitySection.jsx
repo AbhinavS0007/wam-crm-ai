@@ -42,7 +42,11 @@ const ActivitySection = ({ conversationId, refreshKey }) => {
         </p>
       ) : null}
       {!loading && activity.length === 0 ? (
-        <EmptyState title="No activity yet" description="Actions on this lead will appear here." />
+        <EmptyState
+          compact
+          title="No activity yet"
+          description="Actions on this lead will appear here."
+        />
       ) : null}
 
       <ul className="space-y-2">

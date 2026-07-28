@@ -1,23 +1,33 @@
-const STAGE_STYLES = {
-  new: 'bg-slate-100 text-slate-700',
-  contacted: 'bg-blue-100 text-blue-700',
-  qualified: 'bg-indigo-100 text-indigo-700',
-  proposal: 'bg-amber-100 text-amber-700',
-  won: 'bg-green-100 text-green-700',
-  lost: 'bg-red-100 text-red-700',
-  closed: 'bg-slate-200 text-slate-600',
-};
+import { getBuiltinStageStyle } from '../lib/stages.js';
 
-const StageBadge = ({ stage }) => {
+// `label` and `color` are for a custom (non-built-in) stage, resolved by the caller from the
+// merged stage list — StageBadge itself never fetches the catalog.
+const StageBadge = ({ stage, label, color }) => {
   if (!stage) {
     return null;
   }
 
-  const className = STAGE_STYLES[stage] ?? 'bg-slate-100 text-slate-700';
+  const builtinClassName = getBuiltinStageStyle(stage);
+  const displayLabel = label ?? stage;
+
+  if (builtinClassName) {
+    return (
+      <span
+        className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${builtinClassName}`}
+      >
+        {displayLabel}
+      </span>
+    );
+  }
+
+  // A custom stage: render a light tint of its own color instead of a fixed Tailwind class.
+  const tintStyle = color
+    ? { backgroundColor: `${color}26`, color }
+    : { backgroundColor: '#f1f5f9', color: '#334155' };
 
   return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${className}`}>
-      {stage}
+    <span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={tintStyle}>
+      {displayLabel}
     </span>
   );
 };
