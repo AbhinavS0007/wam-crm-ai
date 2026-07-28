@@ -19,9 +19,11 @@ WhatsApp Multi-Account Manager, private team CRM and AI reply assistant.
 - Phase 12: realtime updates — SSE + Redis pub/sub push live changes so the inbox, thread, and lead panel update instantly (no polling delay) — implemented; CI sign-off pending
 - Phase 13: WhatsApp account management — add/connect (QR)/pause/resume/disconnect/remove numbers from the app via an in-process session manager, with live status — implemented; CI sign-off pending
 - Phase 14: reliable send loop and session persistence — the outbound worker now delivers queued replies for active numbers (runtime state carries the org id it was missing), and connected numbers auto-reconnect on server restart from their saved encrypted auth-state (no re-scan) — implemented; CI sign-off pending
+- Phase 15: team management and role-based logins — an admin adds teammates (admin/manager/staff) from a Team page, each new user must replace their temporary password on first sign-in (enforced server-side), and `npm run seed:dev-users` creates one user per role for testing — implemented; CI sign-off pending
+- Phase 16: admin-defined custom lead stages — admin adds stages beyond the fixed 7 (e.g. "Hot Lead") from a Stages page, with create/archive/delete; everyone who can see a lead can apply any stage, built-in or custom — implemented; CI sign-off pending
 
 The UI is now a live, working CRM: sign in → connect a WhatsApp number → inbox → open a lead →
-reply, change stage, add notes, tag, schedule follow-ups, and reveal the phone (if permitted),
+reply, change stage (built-in or a custom one an admin defined), add notes, tag, schedule follow-ups, and reveal the phone (if permitted),
 with updates arriving in realtime, and replies are delivered over WhatsApp for active numbers
 that persist across restarts. The AI reply assistant, delivered/read receipts, media handling,
 and production deployment are still to come.

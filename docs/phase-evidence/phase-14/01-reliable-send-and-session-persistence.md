@@ -30,6 +30,7 @@ retained.
   `startServer` (best-effort, non-fatal, injectable as `reconnectSessionsFn` for tests).
 
 ## Files
+
 - `backend/src/modules/whatsapp/sessions/session-manager.service.js` — `organizationId` in state;
   `reconnectPersistedSessions()`.
 - `backend/src/modules/whatsapp-accounts/whatsapp-account.repository.js` — `findAccountsByStatuses`.
@@ -39,6 +40,7 @@ retained.
   `delivery-runner.test.js` (drains with org id; skips when org id missing), lifecycle test stub.
 
 ## Verification
+
 - `npm run lint` clean; `npm test` — **242 passed (57 files)**.
 - Startup reconnect confirmed running against real data: on boot it attempted every previously
   connected account. Numbers logged out phone-side earlier resolve to `disconnected` (a revoked
@@ -46,5 +48,6 @@ retained.
   its queue and sends within one poll (~5s).
 
 ## Non-goals
+
 - No AI (next phase), no delivered/read receipt ticks, no media.
 - Phone-side-logged-out numbers still need a manual re-scan.
