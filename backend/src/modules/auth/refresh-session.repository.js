@@ -147,11 +147,15 @@ export const revokeActiveRefreshSessionsForUser = ({
   userId,
   revokedAt = new Date(),
   revokeReason = 'user_sessions_revoked',
+  // Keeps one session alive — used when a user changes their own password, so the session
+  // that just authenticated the change is not logged out along with the others.
+  exceptSessionId = null,
 }) =>
   RefreshSession.updateMany(
     {
       userId,
       status: REFRESH_SESSION_STATUSES.ACTIVE,
+      ...(exceptSessionId ? { _id: { $ne: exceptSessionId } } : {}),
     },
     {
       status: REFRESH_SESSION_STATUSES.REVOKED,

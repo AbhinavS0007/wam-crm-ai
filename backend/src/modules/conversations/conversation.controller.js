@@ -45,6 +45,10 @@ const mapConversationError = (error) => {
       statusCode: 403,
       message: 'You do not have access to this conversation.',
     },
+    INVALID_STAGE: {
+      statusCode: 400,
+      message: 'Stage is not a recognized built-in or an active custom stage.',
+    },
   };
 
   const mappedError = errorMap[error.message];

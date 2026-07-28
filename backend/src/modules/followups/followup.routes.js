@@ -1,6 +1,10 @@
 import { Router } from 'express';
 
-import { authenticateRequest, requireCrmTasksManage } from '../../middleware/auth.middleware.js';
+import {
+  authenticateRequest,
+  requireCrmTasksManage,
+  requirePasswordChanged,
+} from '../../middleware/auth.middleware.js';
 
 import {
   cancelFollowUp,
@@ -20,6 +24,7 @@ conversationFollowUpRouter.post('/', requireCrmTasksManage, createFollowUp);
 const followUpRouter = Router();
 
 followUpRouter.use(authenticateRequest);
+followUpRouter.use(requirePasswordChanged);
 
 followUpRouter.get('/', requireCrmTasksManage, listMyFollowUpTasks);
 followUpRouter.patch('/:taskId/complete', requireCrmTasksManage, completeFollowUp);

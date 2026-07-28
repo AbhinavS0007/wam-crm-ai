@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import {
   authenticateRequest,
+  requirePasswordChanged,
   requireAccountsManage,
   requireAccountsRead,
 } from '../../middleware/auth.middleware.js';
@@ -22,6 +23,7 @@ import {
 const whatsappAccountRouter = Router();
 
 whatsappAccountRouter.use(authenticateRequest);
+whatsappAccountRouter.use(requirePasswordChanged);
 
 whatsappAccountRouter.get('/', requireAccountsRead, listAccounts);
 whatsappAccountRouter.post('/', requireAccountsManage, createAccount);

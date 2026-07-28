@@ -137,6 +137,27 @@ export const updateConversationPreview = ({
   ).exec();
 };
 
+/**
+ * Clears the unread counter when an agent opens the conversation. A no-op update (still
+ * returns the current doc) when it is already 0, so callers can always use the result.
+ */
+export const markConversationRead = ({ conversationId, organizationId } = {}) =>
+  Conversation.findOneAndUpdate(
+    {
+      _id: conversationId,
+      organizationId,
+    },
+    {
+      $set: {
+        unreadCount: 0,
+      },
+    },
+    {
+      returnDocument: 'after',
+      runValidators: true,
+    },
+  ).exec();
+
 export const updateAssignment = ({
   conversationId,
   organizationId,

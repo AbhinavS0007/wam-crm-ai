@@ -1,9 +1,6 @@
 import mongoose from 'mongoose';
 
-import {
-  CONVERSATION_STAGE_VALUES,
-  CONVERSATION_STAGES,
-} from '../../constants/conversation-stages.js';
+import { CONVERSATION_STAGES } from '../../constants/conversation-stages.js';
 import {
   CONVERSATION_STATUSES,
   CONVERSATION_STATUS_VALUES,
@@ -73,10 +70,15 @@ const conversationSchema = new mongoose.Schema(
       default: null,
     },
 
+    // Not a Mongoose enum: a stage may be a built-in value or an admin-defined custom stage's
+    // key (see modules/stages). Usability is checked at the service layer, not the schema.
     stage: {
       type: String,
       required: true,
-      enum: CONVERSATION_STAGE_VALUES,
+      trim: true,
+      lowercase: true,
+      minlength: 1,
+      maxlength: 60,
       default: CONVERSATION_STAGES.NEW,
     },
 

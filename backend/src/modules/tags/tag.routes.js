@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import {
   authenticateRequest,
+  requirePasswordChanged,
   requireConversationsRead,
   requireCrmTagsManage,
 } from '../../middleware/auth.middleware.js';
@@ -12,6 +13,7 @@ import { archiveTag, attachTag, createTag, detachTag, listTags } from './tag.con
 const tagRouter = Router();
 
 tagRouter.use(authenticateRequest);
+tagRouter.use(requirePasswordChanged);
 
 tagRouter.get('/', requireConversationsRead, listTags);
 tagRouter.post('/', requireCrmTagsManage, createTag);

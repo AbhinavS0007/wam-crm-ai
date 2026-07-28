@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import app from '../src/app.js';
 import { connectDatabase, disconnectDatabase } from '../src/config/database.js';
 import { connectRedis, disconnectRedis } from '../src/config/redis.js';
+import { updateConversationPreview } from '../src/modules/conversations/conversation.repository.js';
 import {
   cleanupPhase7TestData,
   createContactWithPhone,
@@ -138,6 +139,38 @@ describe('Phase 7 conversation API', () => {
     expect(response.body.data.length).toBeGreaterThanOrEqual(1);
     expect(response.body.data[0].body).toBe('Assigned inbound message');
     expect(response.body.data[0].direction).toBe('in');
+  });
+
+  it('clears the unread count when the conversation is opened', async () => {
+    await updateConversationPreview({
+      conversationId: assignedConversation._id,
+      organizationId: base.organization._id,
+      unreadCountIncrement: 3,
+    });
+
+    const listBefore = await request(app)
+      .get('/api/v1/conversations')
+      .set(authHeader(staffToken))
+      .expect(200);
+    const before = listBefore.body.data.find(
+      (conversation) => conversation.id === assignedConversation._id.toString(),
+    );
+    expect(before.unreadCount).toBe(3);
+
+    const detailResponse = await request(app)
+      .get(`/api/v1/conversations/${assignedConversation._id.toString()}`)
+      .set(authHeader(staffToken))
+      .expect(200);
+    expect(detailResponse.body.data.conversation.unreadCount).toBe(0);
+
+    const listAfter = await request(app)
+      .get('/api/v1/conversations')
+      .set(authHeader(staffToken))
+      .expect(200);
+    const after = listAfter.body.data.find(
+      (conversation) => conversation.id === assignedConversation._id.toString(),
+    );
+    expect(after.unreadCount).toBe(0);
   });
 
   it('lets an assigner reassign a conversation, and forbids staff from assigning', async () => {

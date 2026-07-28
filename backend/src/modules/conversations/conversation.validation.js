@@ -37,8 +37,17 @@ export const sendMessageBodySchema = z.object({
   idempotencyKey: z.string().trim().min(8).max(255),
 });
 
+// Not a Zod enum: a stage may be a built-in value or an admin-defined custom stage's key.
+// Actual usability (built-in, or an active custom stage for this org) is checked in the
+// service layer via resolveUsableStageValue.
 export const changeStageBodySchema = z.object({
-  stage: z.enum(CONVERSATION_STAGE_VALUES),
+  stage: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(1)
+    .max(60)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
 });
 
 export const conversationActivityQuerySchema = z.object({

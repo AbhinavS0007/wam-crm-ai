@@ -12,9 +12,11 @@ import { findMessagesByConversationCursor } from '../messages/message.repository
 import { serializeMessage } from '../messages/message.serializer.js';
 import { REALTIME_REASONS } from '../realtime/realtime.events.js';
 import { publishConversationChanged } from '../realtime/realtime.publisher.js';
+import { resolveUsableStageValue } from '../stages/stage.service.js';
 import {
   findConversationById,
   listConversations,
+  markConversationRead,
   updateAssignment,
   updateStage,
 } from './conversation.repository.js';
@@ -96,13 +98,31 @@ export const getConversationForActor = async ({
     actorId,
   });
 
+  // Opening the conversation is how an agent "sees" it — clear the unread badge so it
+  // doesn't linger after the thread has already been read.
+  let viewedConversation = conversation;
+  if (conversation.unreadCount > 0) {
+    viewedConversation =
+      (await markConversationRead({
+        conversationId: conversation._id,
+        organizationId,
+      })) ?? conversation;
+
+    await publishConversationChanged({
+      organizationId,
+      conversationId: conversation._id,
+      assignedTo: conversation.assignedTo,
+      reason: REALTIME_REASONS.READ,
+    });
+  }
+
   const contact = await findContactById({
     contactId: conversation.contactId,
     organizationId,
   });
 
   return {
-    conversation: serializeConversation(conversation),
+    conversation: serializeConversation(viewedConversation),
     contact: serializeContact(contact),
   };
 };
@@ -194,10 +214,15 @@ export const changeConversationStageForActor = async ({
     actorId: actor._id,
   });
 
+  // The Mongoose schema no longer enforces a fixed enum (custom stages can't be one), so the
+  // service is the safety net: the value must be a built-in or an active custom stage for this
+  // org. Returns the canonical stored form (e.g. normalized casing for a custom stage's key).
+  const resolvedStage = await resolveUsableStageValue({ organizationId, stage });
+
   const updated = await updateStage({
     conversationId: conversation._id,
     organizationId,
-    stage,
+    stage: resolvedStage,
     lastHandledBy: actor._id,
   });
 
@@ -207,9 +232,9 @@ export const changeConversationStageForActor = async ({
     conversationId: conversation._id,
     actorId: actor._id,
     eventType: ACTIVITY_EVENTS.CONVERSATION_STAGE_CHANGED,
-    summary: `Conversation stage changed to ${stage}.`,
+    summary: `Conversation stage changed to ${resolvedStage}.`,
     metadata: {
-      stage,
+      stage: resolvedStage,
     },
   });
 

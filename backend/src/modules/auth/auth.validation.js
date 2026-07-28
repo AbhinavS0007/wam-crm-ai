@@ -14,3 +14,10 @@ export const loginBodySchema = z.object({
 
   password: z.string().min(1),
 });
+
+export const changePasswordBodySchema = z.object({
+  currentPassword: z.string().min(1),
+
+  // Policy length is enforced by validatePlainPassword so the reason code stays specific.
+  newPassword: z.string().min(1).max(128),
+});

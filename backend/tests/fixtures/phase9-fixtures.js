@@ -7,6 +7,7 @@ import { FollowUpTask } from '../../src/modules/followups/followup-task.model.js
 import { Message } from '../../src/modules/messages/message.model.js';
 import { Note } from '../../src/modules/notes/note.model.js';
 import { Organization } from '../../src/modules/organizations/organization.model.js';
+import { Stage } from '../../src/modules/stages/stage.model.js';
 import { Tag } from '../../src/modules/tags/tag.model.js';
 import { User } from '../../src/modules/users/user.model.js';
 import { initializePhase3Models } from './phase3-fixtures.js';
@@ -48,6 +49,7 @@ export const cleanupPhase9TestData = async (testRunId) => {
       Note.deleteMany(orgFilter),
       FollowUpTask.deleteMany(orgFilter),
       Tag.deleteMany(orgFilter),
+      Stage.deleteMany(orgFilter),
       Message.deleteMany(orgFilter),
       Conversation.deleteMany(orgFilter),
       Contact.deleteMany(orgFilter),

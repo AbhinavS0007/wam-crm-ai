@@ -6,10 +6,12 @@ import { connectDatabase, disconnectDatabase } from '../src/config/database.js';
 import { connectRedis, disconnectRedis } from '../src/config/redis.js';
 import { ACTIVITY_EVENTS } from '../src/constants/activity-events.js';
 import { CONVERSATION_STAGES } from '../src/constants/conversation-stages.js';
+import { ROLES } from '../src/constants/roles.js';
 import {
   cleanupPhase9TestData,
   createContactWithPhone,
   createConversationFor,
+  createLoginableUser,
   createPhase7Base,
   createTestRunId,
   initializePhase9Models,
@@ -25,7 +27,9 @@ const authHeader = (token) => ({
 
 describe('Phase 9 conversation stage + activity API', () => {
   let base;
+  let adminToken;
   let staffToken;
+  let managerToken;
   let assignedConversation;
   let unassignedConversation;
 
@@ -35,7 +39,16 @@ describe('Phase 9 conversation stage + activity API', () => {
     await initializePhase9Models();
 
     base = await createPhase7Base({ testRunId, suffix: 'crm' });
+    adminToken = await loginAs({ organization: base.organization, user: base.admin, testRunId });
     staffToken = await loginAs({ organization: base.organization, user: base.staff, testRunId });
+
+    const manager = await createLoginableUser({
+      organizationId: base.organization._id,
+      testRunId,
+      suffix: 'crm-manager',
+      role: ROLES.MANAGER,
+    });
+    managerToken = await loginAs({ organization: base.organization, user: manager, testRunId });
 
     const assignedContact = await createContactWithPhone({
       organizationId: base.organization._id,
@@ -69,10 +82,10 @@ describe('Phase 9 conversation stage + activity API', () => {
     }
   });
 
-  it('changes the conversation stage and records an activity entry', async () => {
+  it('lets an admin change the conversation stage and records an activity entry', async () => {
     const response = await request(app)
       .patch(`/api/v1/conversations/${assignedConversation._id.toString()}/stage`)
-      .set(authHeader(staffToken))
+      .set(authHeader(adminToken))
       .send({ stage: CONVERSATION_STAGES.QUALIFIED })
       .expect(200);
 
@@ -80,7 +93,7 @@ describe('Phase 9 conversation stage + activity API', () => {
 
     const activity = await request(app)
       .get(`/api/v1/conversations/${assignedConversation._id.toString()}/activity`)
-      .set(authHeader(staffToken))
+      .set(authHeader(adminToken))
       .expect(200);
 
     const events = activity.body.data.map((entry) => entry.eventType);
@@ -90,9 +103,47 @@ describe('Phase 9 conversation stage + activity API', () => {
   it('rejects an invalid stage value', async () => {
     await request(app)
       .patch(`/api/v1/conversations/${assignedConversation._id.toString()}/stage`)
-      .set(authHeader(staffToken))
+      .set(authHeader(adminToken))
       .send({ stage: 'not-a-stage' })
       .expect(400);
+  });
+
+  it('lets a staff member change the stage on their own assigned conversation', async () => {
+    const response = await request(app)
+      .patch(`/api/v1/conversations/${assignedConversation._id.toString()}/stage`)
+      .set(authHeader(staffToken))
+      .send({ stage: CONVERSATION_STAGES.CONTACTED })
+      .expect(200);
+
+    expect(response.body.data.stage).toBe(CONVERSATION_STAGES.CONTACTED);
+  });
+
+  it('lets a manager change the stage too — applying a stage is not admin-only', async () => {
+    const response = await request(app)
+      .patch(`/api/v1/conversations/${assignedConversation._id.toString()}/stage`)
+      .set(authHeader(managerToken))
+      .send({ stage: CONVERSATION_STAGES.QUALIFIED })
+      .expect(200);
+
+    expect(response.body.data.stage).toBe(CONVERSATION_STAGES.QUALIFIED);
+  });
+
+  it('lets a staff member select an admin-created custom stage', async () => {
+    const createResponse = await request(app)
+      .post('/api/v1/stages')
+      .set(authHeader(adminToken))
+      .send({ label: 'Hot Lead' })
+      .expect(201);
+
+    expect(createResponse.body.data.key).toBe('hot-lead');
+
+    const stageResponse = await request(app)
+      .patch(`/api/v1/conversations/${assignedConversation._id.toString()}/stage`)
+      .set(authHeader(staffToken))
+      .send({ stage: 'hot-lead' })
+      .expect(200);
+
+    expect(stageResponse.body.data.stage).toBe('hot-lead');
   });
 
   it('blocks a scoped staff user from an unassigned conversation stage and activity', async () => {

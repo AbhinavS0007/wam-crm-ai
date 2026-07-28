@@ -11,4 +11,5 @@ export const REALTIME_REASONS = Object.freeze({
   STATUS: 'status',
   STAGE: 'stage',
   ASSIGNMENT: 'assignment',
+  READ: 'read',
 });

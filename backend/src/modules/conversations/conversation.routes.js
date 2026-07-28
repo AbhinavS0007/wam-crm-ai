@@ -5,6 +5,7 @@ import {
   requireConversationsAssign,
   requireConversationsRead,
   requireMessagesSend,
+  requirePasswordChanged,
 } from '../../middleware/auth.middleware.js';
 import { conversationFollowUpRouter } from '../followups/followup.routes.js';
 import noteRouter from '../notes/note.routes.js';
@@ -23,6 +24,7 @@ import {
 const conversationRouter = Router();
 
 conversationRouter.use(authenticateRequest);
+conversationRouter.use(requirePasswordChanged);
 
 conversationRouter.get('/', requireConversationsRead, listConversations);
 conversationRouter.get('/:conversationId', requireConversationsRead, getConversation);

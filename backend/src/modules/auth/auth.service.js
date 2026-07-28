@@ -31,7 +31,7 @@ import {
 } from './refresh-session.repository.js';
 import { serializeRefreshSession } from './refresh-session.serializer.js';
 import { clearLoginRateLimit, checkLoginRateLimit } from './login-rate-limit.service.js';
-import { verifyPassword } from './password.service.js';
+import { hashPassword, validatePlainPassword, verifyPassword } from './password.service.js';
 import { resolveUserPermissions } from './permission.service.js';
 import {
   generateRefreshToken,
@@ -482,6 +482,125 @@ export const logoutAllUserSessions = async ({ user, organization, session, reque
 
   return {
     sessionsRevoked: true,
+  };
+};
+
+/**
+ * Lets a signed-in user set their own password. This is the only way to clear
+ * `mustChangePassword`, so an admin-assigned temporary password cannot stay in use.
+ * Every other session is revoked: the old password must not keep a login alive.
+ */
+export const changeOwnPassword = async ({
+  user,
+  organization,
+  session,
+  currentPassword,
+  newPassword,
+  requestContext,
+}) => {
+  // `req.auth.user` is loaded without the hash, so re-read it with the hash for verification.
+  const userWithPasswordHash = await findUserById({
+    userId: user._id,
+    organizationId: organization._id,
+    includePasswordHash: true,
+  });
+
+  if (!userWithPasswordHash) {
+    throw createHttpError({
+      statusCode: 401,
+      code: 'USER_NOT_ACTIVE',
+      message: 'User is not active.',
+    });
+  }
+
+  const currentPasswordMatches = await verifyPassword({
+    password: currentPassword,
+    passwordHash: userWithPasswordHash.passwordHash,
+  });
+
+  if (!currentPasswordMatches) {
+    await createSafeAuditLog({
+      organizationId: organization._id,
+      eventType: AUDIT_EVENTS.AUTH_PASSWORD_CHANGED,
+      actorId: user._id,
+      targetUserId: user._id,
+      sessionId: session?._id ?? null,
+      outcome: AUDIT_OUTCOMES.FAILURE,
+      reasonCode: 'invalid_current_password',
+      requestContext,
+      metadata: {
+        source: 'auth-change-password',
+      },
+    });
+
+    throw createHttpError({
+      statusCode: 401,
+      code: 'INVALID_CURRENT_PASSWORD',
+      message: 'Current password is incorrect.',
+    });
+  }
+
+  const passwordValidation = validatePlainPassword(newPassword);
+
+  if (!passwordValidation.valid) {
+    throw createHttpError({
+      statusCode: 400,
+      code: passwordValidation.reasonCode,
+      message: 'New password does not meet the password policy.',
+    });
+  }
+
+  const reusesCurrentPassword = await verifyPassword({
+    password: newPassword,
+    passwordHash: userWithPasswordHash.passwordHash,
+  });
+
+  if (reusesCurrentPassword) {
+    throw createHttpError({
+      statusCode: 400,
+      code: 'PASSWORD_REUSED',
+      message: 'New password must be different from the current password.',
+    });
+  }
+
+  const passwordHash = await hashPassword(newPassword);
+
+  const updatedUser = await updateUserById({
+    userId: user._id,
+    organizationId: organization._id,
+    updateData: {
+      passwordHash,
+      mustChangePassword: false,
+      passwordChangedAt: new Date(),
+      updatedBy: user._id,
+    },
+  });
+
+  // Every other session dies with the old password; the current one survives so the user
+  // is not bounced to the login screen the moment they satisfy a forced change.
+  await revokeActiveRefreshSessionsForUser({
+    userId: user._id,
+    revokeReason: 'password_changed',
+    exceptSessionId: session?._id ?? null,
+  });
+
+  await createSafeAuditLog({
+    organizationId: organization._id,
+    eventType: AUDIT_EVENTS.AUTH_PASSWORD_CHANGED,
+    actorId: user._id,
+    targetUserId: user._id,
+    sessionId: session?._id ?? null,
+    outcome: AUDIT_OUTCOMES.SUCCESS,
+    reasonCode: 'password_changed',
+    requestContext,
+    metadata: {
+      source: 'auth-change-password',
+    },
+  });
+
+  return {
+    passwordChanged: true,
+    user: serializeUser(updatedUser),
   };
 };
 

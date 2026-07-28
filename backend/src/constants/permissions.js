@@ -13,6 +13,7 @@ export const PERMISSIONS = Object.freeze({
 
   CRM_TAGS_MANAGE: 'crm.tags.manage',
   CRM_TASKS_MANAGE: 'crm.tasks.manage',
+  CRM_STAGE_MANAGE: 'crm.stage.manage',
 
   CLIENT_PII_REVEAL: 'client_pii.reveal',
   CLIENT_PII_EXPORT: 'client_pii.export',
@@ -44,6 +45,7 @@ export const DEFAULT_ROLE_PERMISSIONS = Object.freeze({
     PERMISSIONS.MESSAGES_SEND,
     PERMISSIONS.CRM_TAGS_MANAGE,
     PERMISSIONS.CRM_TASKS_MANAGE,
+    PERMISSIONS.CRM_STAGE_MANAGE,
     PERMISSIONS.CLIENT_PII_REVEAL,
     PERMISSIONS.NOTES_PRIVATE_READ,
     PERMISSIONS.AI_GENERATE,

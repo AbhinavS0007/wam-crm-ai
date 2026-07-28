@@ -9,12 +9,13 @@ import {
 } from './auth-cookie.service.js';
 import {
   buildCurrentUserProfile,
+  changeOwnPassword,
   loginWithPassword,
   logoutAllUserSessions,
   logoutCurrentSession,
   refreshAuthenticatedSession,
 } from './auth.service.js';
-import { loginBodySchema } from './auth.validation.js';
+import { changePasswordBodySchema, loginBodySchema } from './auth.validation.js';
 
 const parseBody = (schema, body) => {
   const result = schema.safeParse(body);
@@ -101,6 +102,26 @@ export const logoutAll = asyncHandler(async (req, res) => {
     data: {
       loggedOut: true,
       sessionsRevoked: result.sessionsRevoked,
+    },
+  });
+});
+
+export const changePassword = asyncHandler(async (req, res) => {
+  const body = parseBody(changePasswordBodySchema, req.body);
+
+  const result = await changeOwnPassword({
+    user: req.auth.user,
+    organization: req.auth.organization,
+    session: req.auth.session,
+    currentPassword: body.currentPassword,
+    newPassword: body.newPassword,
+    requestContext: req.context,
+  });
+
+  res.status(200).json({
+    data: {
+      passwordChanged: result.passwordChanged,
+      user: result.user,
     },
   });
 });

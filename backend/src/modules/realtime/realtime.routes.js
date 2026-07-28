@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import { authenticateRequest } from '../../middleware/auth.middleware.js';
+import { authenticateRequest, requirePasswordChanged } from '../../middleware/auth.middleware.js';
 
 import { registerClient, removeClient } from './realtime.hub.js';
 
@@ -9,6 +9,7 @@ const HEARTBEAT_INTERVAL_MS = 25000;
 const realtimeRouter = Router();
 
 realtimeRouter.use(authenticateRequest);
+realtimeRouter.use(requirePasswordChanged);
 
 realtimeRouter.get('/stream', (req, res) => {
   res.writeHead(200, {

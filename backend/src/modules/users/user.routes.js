@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import {
   authenticateRequest,
+  requirePasswordChanged,
   requireUsersManage,
   requireUsersRead,
 } from '../../middleware/auth.middleware.js';
@@ -19,6 +20,7 @@ import {
 const userRouter = Router();
 
 userRouter.use(authenticateRequest);
+userRouter.use(requirePasswordChanged);
 
 userRouter.get('/', requireUsersRead, listUsers);
 userRouter.post('/', requireUsersManage, createUser);

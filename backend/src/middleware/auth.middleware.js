@@ -168,6 +168,38 @@ export const requireAnyPermission =
     next();
   };
 
+/**
+ * Blocks the product API while a user still owes a password change. Enforced server-side on
+ * purpose: a frontend-only gate could be stepped around by calling the API directly. The
+ * `/auth` routes stay open so the user can still read their profile, change the password and
+ * log out.
+ */
+export const requirePasswordChanged = (req, res, next) => {
+  if (!req.auth?.user) {
+    next(
+      createHttpError({
+        statusCode: 401,
+        code: 'AUTHENTICATION_REQUIRED',
+        message: 'Authentication is required.',
+      }),
+    );
+    return;
+  }
+
+  if (req.auth.user.mustChangePassword) {
+    next(
+      createHttpError({
+        statusCode: 403,
+        code: 'PASSWORD_CHANGE_REQUIRED',
+        message: 'You must change your password before using the application.',
+      }),
+    );
+    return;
+  }
+
+  next();
+};
+
 export const requireUsersRead = requirePermissions(PERMISSIONS.USERS_READ);
 
 export const requireUsersManage = requirePermissions(PERMISSIONS.USERS_MANAGE);
@@ -186,6 +218,8 @@ export const requireClientPiiReveal = requirePermissions(PERMISSIONS.CLIENT_PII_
 export const requireCrmTasksManage = requirePermissions(PERMISSIONS.CRM_TASKS_MANAGE);
 
 export const requireCrmTagsManage = requirePermissions(PERMISSIONS.CRM_TAGS_MANAGE);
+
+export const requireCrmStageManage = requirePermissions(PERMISSIONS.CRM_STAGE_MANAGE);
 
 export const requireAccountsRead = requirePermissions(PERMISSIONS.ACCOUNTS_READ);
 
