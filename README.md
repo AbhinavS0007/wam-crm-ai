@@ -21,12 +21,14 @@ WhatsApp Multi-Account Manager, private team CRM and AI reply assistant.
 - Phase 14: reliable send loop and session persistence — the outbound worker now delivers queued replies for active numbers (runtime state carries the org id it was missing), and connected numbers auto-reconnect on server restart from their saved encrypted auth-state (no re-scan) — implemented; CI sign-off pending
 - Phase 15: team management and role-based logins — an admin adds teammates (admin/manager/staff) from a Team page, each new user must replace their temporary password on first sign-in (enforced server-side), and `npm run seed:dev-users` creates one user per role for testing — implemented; CI sign-off pending
 - Phase 16: admin-defined custom lead stages — admin adds stages beyond the fixed 7 (e.g. "Hot Lead") from a Stages page, with create/archive/delete; everyone who can see a lead can apply any stage, built-in or custom — implemented; CI sign-off pending
+- Phase 17a: AI reply assistant + knowledge base (first AI slice, [ADR-005](docs/adr/ADR-005-human-reviewed-ai.md)-compliant) — a "Suggest reply" button drafts a reply grounded in the thread and an admin-managed knowledge base; a human always reviews/edits and explicitly sends it, nothing is ever auto-sent. Disabled by default (`AI_ENABLED=false`); provider is pluggable (`AI_PROVIDER=anthropic` or `grok`); rate-limited, PII-sanitized context, and drafts auto-expire after 30 days — implemented; CI sign-off pending
 
 The UI is now a live, working CRM: sign in → connect a WhatsApp number → inbox → open a lead →
-reply, change stage (built-in or a custom one an admin defined), add notes, tag, schedule follow-ups, and reveal the phone (if permitted),
-with updates arriving in realtime, and replies are delivered over WhatsApp for active numbers
-that persist across restarts. The AI reply assistant, delivered/read receipts, media handling,
-and production deployment are still to come.
+reply (optionally starting from an AI-suggested draft you review and send), change stage (built-in
+or a custom one an admin defined), add notes, tag, schedule follow-ups, and reveal the phone (if
+permitted), with updates arriving in realtime, and replies are delivered over WhatsApp for active
+numbers that persist across restarts. Auto-send AI, delivered/read receipts, media handling, and
+production deployment are still to come.
 Do not connect a real WhatsApp number or use real client data — only the disposable POC
 number and synthetic data during development.
 

@@ -89,6 +89,48 @@ describe('LeadPanel — stage + reveal', () => {
     expect(screen.getByText(/audited/i)).toBeInTheDocument();
   });
 
+  it('toggles the phone back off and re-shows it without a second audited call', async () => {
+    endpoints.revealPhone.mockResolvedValue({
+      data: { contactId: 'ct1', leadId: 'LEAD-1', phone: '919876500123' },
+    });
+
+    renderAuthed(<LeadPanel conversation={conversation} contactId="ct1" onStageChange={vi.fn()} />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Reveal phone' }));
+    expect(await screen.findByText('919876500123')).toBeInTheDocument();
+
+    // Hide it again.
+    fireEvent.click(screen.getByRole('button', { name: 'Hide phone' }));
+    expect(screen.queryByText('919876500123')).not.toBeInTheDocument();
+
+    // Re-showing is local only — the number already left the backend, so no new reveal call.
+    fireEvent.click(screen.getByRole('button', { name: 'Reveal phone' }));
+    expect(await screen.findByText('919876500123')).toBeInTheDocument();
+    expect(endpoints.revealPhone).toHaveBeenCalledTimes(1);
+  });
+
+  it('says so when there is no phone on file, and does not re-audit on further clicks', async () => {
+    // @lid senders carry no phone, so the reveal endpoint answers with null.
+    endpoints.revealPhone.mockResolvedValue({
+      data: { contactId: 'ct1', leadId: 'LEAD-1', phone: null },
+    });
+
+    renderAuthed(<LeadPanel conversation={conversation} contactId="ct1" onStageChange={vi.fn()} />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Reveal phone' }));
+
+    expect(await screen.findByText('No phone on file')).toBeInTheDocument();
+    expect(screen.queryByText(/access is audited/i)).not.toBeInTheDocument();
+
+    // Toggling stays local: a missing number must not spam the audit log.
+    fireEvent.click(screen.getByRole('button', { name: 'Hide' }));
+    expect(screen.queryByText('No phone on file')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reveal phone' }));
+    expect(await screen.findByText('No phone on file')).toBeInTheDocument();
+    expect(endpoints.revealPhone).toHaveBeenCalledTimes(1);
+  });
+
   it('hides the reveal button without client_pii.reveal', async () => {
     endpoints.refresh.mockResolvedValue(
       AUTH_PAYLOAD({ role: 'staff', permissions: [PERMISSIONS.CRM_TASKS_MANAGE] }),

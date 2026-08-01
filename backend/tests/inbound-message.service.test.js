@@ -4,6 +4,7 @@ import { connectDatabase, disconnectDatabase } from '../src/config/database.js';
 import { Contact } from '../src/modules/contacts/contact.model.js';
 import { Conversation } from '../src/modules/conversations/conversation.model.js';
 import { Message } from '../src/modules/messages/message.model.js';
+import { decryptContactPhoneFromStorage } from '../src/modules/privacy/protected-pii.service.js';
 import { createInboundMessageIngestionService } from '../src/modules/whatsapp/ingestion/inbound-message.service.js';
 import {
   cleanupPhase3TestData,
@@ -168,6 +169,80 @@ describe('Phase 6 inbound message ingestion service', () => {
       organizationId: context.organizationId,
     }).exec();
     expect(contactCount).toBe(0);
+  });
+
+  it('stores no phone for an unresolved @lid sender but still ingests the message', async () => {
+    const context = await buildContext('ingest-lid-unresolved');
+
+    const result = await service.ingestInboundMessage({
+      ...context,
+      inboundMessage: {
+        ...inboundFor({ messageId: `lid-none-${testRunId}` }),
+        remoteJid: '177850300768311@lid',
+        senderJid: '177850300768311@lid',
+      },
+    });
+
+    expect(result.persisted).toBe(true);
+
+    const contact = await Contact.findById(result.contactId).select('+encryptedPhone').exec();
+    expect(contact.encryptedPhone ?? null).toBeNull();
+  });
+
+  it('stores the phone when the provider resolved the @lid to a phone JID', async () => {
+    const context = await buildContext('ingest-lid-resolved');
+
+    const result = await service.ingestInboundMessage({
+      ...context,
+      inboundMessage: {
+        ...inboundFor({ messageId: `lid-ok-${testRunId}` }),
+        remoteJid: '177850300768312@lid',
+        senderJid: '177850300768312@lid',
+        // Baileys hands back a device-suffixed phone JID.
+        senderPhoneJid: '919876543210:0@s.whatsapp.net',
+      },
+    });
+
+    expect(result.persisted).toBe(true);
+
+    const contact = await Contact.findById(result.contactId).select('+encryptedPhone').exec();
+    expect(contact.encryptedPhone).toBeTruthy();
+    expect(decryptContactPhoneFromStorage(contact.encryptedPhone)).toBe('919876543210');
+  });
+
+  it('backfills the phone on a later message once the @lid mapping is known', async () => {
+    const context = await buildContext('ingest-lid-backfill');
+    const lidJid = '177850300768313@lid';
+
+    // First message arrives before the mapping is available.
+    const first = await service.ingestInboundMessage({
+      ...context,
+      inboundMessage: {
+        ...inboundFor({ messageId: `lid-bf-1-${testRunId}`, text: 'First' }),
+        remoteJid: lidJid,
+        senderJid: lidJid,
+      },
+    });
+
+    const before = await Contact.findById(first.contactId).select('+encryptedPhone').exec();
+    expect(before.encryptedPhone ?? null).toBeNull();
+
+    // Second message carries the resolved mapping.
+    const second = await service.ingestInboundMessage({
+      ...context,
+      inboundMessage: {
+        ...inboundFor({ messageId: `lid-bf-2-${testRunId}`, text: 'Second' }),
+        remoteJid: lidJid,
+        senderJid: lidJid,
+        senderPhoneJid: '919876500999@s.whatsapp.net',
+      },
+    });
+
+    // Same contact — resolving the phone must not fork identity.
+    expect(second.contactId).toBe(first.contactId);
+
+    const after = await Contact.findById(first.contactId).select('+encryptedPhone').exec();
+    expect(decryptContactPhoneFromStorage(after.encryptedPhone)).toBe('919876500999');
   });
 
   it('never returns raw phone digits or JIDs in its result summary', async () => {

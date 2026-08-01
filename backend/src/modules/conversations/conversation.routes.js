@@ -2,11 +2,13 @@ import { Router } from 'express';
 
 import {
   authenticateRequest,
+  requireAiGenerate,
   requireConversationsAssign,
   requireConversationsRead,
   requireMessagesSend,
   requirePasswordChanged,
 } from '../../middleware/auth.middleware.js';
+import { generateAiDraft, recordAiDraftOutcome } from '../ai/ai-draft.controller.js';
 import { conversationFollowUpRouter } from '../followups/followup.routes.js';
 import noteRouter from '../notes/note.routes.js';
 import { conversationTagRouter } from '../tags/tag.routes.js';
@@ -49,6 +51,12 @@ conversationRouter.patch(
   changeConversationStage,
 );
 conversationRouter.post('/:conversationId/messages', requireMessagesSend, sendConversationMessage);
+conversationRouter.post('/:conversationId/ai-draft', requireAiGenerate, generateAiDraft);
+conversationRouter.patch(
+  '/:conversationId/ai-draft/:draftId/outcome',
+  requireAiGenerate,
+  recordAiDraftOutcome,
+);
 
 // Conversation-scoped CRM sub-resources
 conversationRouter.use('/:conversationId/notes', noteRouter);

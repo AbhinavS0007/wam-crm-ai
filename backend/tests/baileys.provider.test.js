@@ -242,3 +242,76 @@ describe('normalizeBaileysInboundMessage sender resolution', () => {
     expect(normalized.remoteJid).toBe('1779999311@lid');
   });
 });
+
+describe('Baileys @lid sender resolution', () => {
+  const lidJid = '177850300768311@lid';
+
+  const upsertFrom = ({ jid }) => ({
+    messages: [
+      {
+        key: { id: 'msg-1', remoteJid: jid, participant: '' },
+        message: { conversation: 'Hi' },
+        pushName: 'Riya',
+        messageTimestamp: 1_753_363_200,
+      },
+    ],
+  });
+
+  it('resolves a @lid sender to a phone JID and passes it to ingestion', async () => {
+    const { eventHandlers, provider } = createProviderTestHarness({
+      socketOverrides: {
+        signalRepository: {
+          lidMapping: {
+            getPNForLID: vi.fn(async () => '919876543210:0@s.whatsapp.net'),
+          },
+        },
+      },
+    });
+
+    const onInboundMessage = vi.fn();
+    await provider.createSession({ onInboundMessage });
+    await eventHandlers['messages.upsert'](upsertFrom({ jid: lidJid }));
+
+    expect(onInboundMessage).toHaveBeenCalledTimes(1);
+    const [inbound] = onInboundMessage.mock.calls[0];
+    expect(inbound.senderJid).toBe(lidJid);
+    expect(inbound.senderPhoneJid).toBe('919876543210:0@s.whatsapp.net');
+  });
+
+  it('still delivers the message when the LID mapping is unknown', async () => {
+    const { eventHandlers, provider } = createProviderTestHarness({
+      socketOverrides: {
+        signalRepository: {
+          lidMapping: { getPNForLID: vi.fn(async () => null) },
+        },
+      },
+    });
+
+    const onInboundMessage = vi.fn();
+    await provider.createSession({ onInboundMessage });
+    await eventHandlers['messages.upsert'](upsertFrom({ jid: lidJid }));
+
+    const [inbound] = onInboundMessage.mock.calls[0];
+    expect(inbound.senderPhoneJid).toBeUndefined();
+    expect(inbound.eventType).toBe('message.received');
+  });
+
+  it('survives a throwing LID store and never looks one up for a phone JID', async () => {
+    const getPNForLID = vi.fn(async () => {
+      throw new Error('keystore unavailable');
+    });
+    const { eventHandlers, provider } = createProviderTestHarness({
+      socketOverrides: { signalRepository: { lidMapping: { getPNForLID } } },
+    });
+
+    const onInboundMessage = vi.fn();
+    await provider.createSession({ onInboundMessage });
+
+    await eventHandlers['messages.upsert'](upsertFrom({ jid: lidJid }));
+    expect(onInboundMessage.mock.calls[0][0].senderPhoneJid).toBeUndefined();
+
+    // A plain phone JID needs no mapping lookup at all.
+    await eventHandlers['messages.upsert'](upsertFrom({ jid: '919876543210@s.whatsapp.net' }));
+    expect(getPNForLID).toHaveBeenCalledTimes(1);
+  });
+});

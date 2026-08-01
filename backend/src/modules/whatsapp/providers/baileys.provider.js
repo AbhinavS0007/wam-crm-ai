@@ -115,6 +115,36 @@ export const shouldIgnoreBaileysInboundMessage = (message = {}) => {
   );
 };
 
+export const isLidJid = (jid) => typeof jid === 'string' && jid.trim().endsWith('@lid');
+
+/**
+ * Resolves a `@lid` sender to its phone-number JID using the session's LID mapping store.
+ *
+ * WhatsApp increasingly delivers direct messages from an opaque LinkedID (`<id>@lid`) rather
+ * than `<phone>@s.whatsapp.net`, so the phone cannot be parsed out of the JID. Baileys keeps a
+ * reverse mapping in the `lid-mapping` keystore (Mongo-backed here through the auth-state
+ * adapter). Returns null for non-LID input or when the mapping is not known yet — callers must
+ * treat a missing phone as normal, not an error.
+ */
+export const resolveLidPhoneJid = async ({ socket, jid } = {}) => {
+  if (!isLidJid(jid)) {
+    return null;
+  }
+
+  const lidMapping = socket?.signalRepository?.lidMapping;
+
+  if (typeof lidMapping?.getPNForLID !== 'function') {
+    return null;
+  }
+
+  try {
+    return (await lidMapping.getPNForLID(jid)) ?? null;
+  } catch {
+    // A missing or unreadable mapping must never drop the inbound message.
+    return null;
+  }
+};
+
 export const normalizeBaileysInboundMessage = (message = {}) => {
   if (shouldIgnoreBaileysInboundMessage(message)) {
     return null;
@@ -309,11 +339,18 @@ export const createBaileysProvider = ({
           .filter(Boolean);
 
         for (const inboundMessage of inboundMessages) {
+          // `@lid` senders carry no phone in the JID. Resolve it here, where the socket (and so
+          // the LID mapping store) is in scope, and hand it to ingestion as a separate field.
+          const senderPhoneJid = await resolveLidPhoneJid({
+            socket,
+            jid: inboundMessage.senderJid,
+          });
+
           await safeCall({
             callback: sessionInput.onInboundMessage,
             logger,
             label: 'Baileys inbound message callback',
-            value: inboundMessage,
+            value: senderPhoneJid ? { ...inboundMessage, senderPhoneJid } : inboundMessage,
           });
         }
       });

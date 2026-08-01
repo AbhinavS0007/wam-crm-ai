@@ -221,6 +221,10 @@ export const requireCrmTagsManage = requirePermissions(PERMISSIONS.CRM_TAGS_MANA
 
 export const requireCrmStageManage = requirePermissions(PERMISSIONS.CRM_STAGE_MANAGE);
 
+export const requireAiGenerate = requirePermissions(PERMISSIONS.AI_GENERATE);
+
+export const requireAiKnowledgeManage = requirePermissions(PERMISSIONS.AI_KNOWLEDGE_MANAGE);
+
 export const requireAccountsRead = requirePermissions(PERMISSIONS.ACCOUNTS_READ);
 
 export const requireAccountsManage = requirePermissions(PERMISSIONS.ACCOUNTS_MANAGE);

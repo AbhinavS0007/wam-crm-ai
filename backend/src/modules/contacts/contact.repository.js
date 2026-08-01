@@ -113,6 +113,36 @@ export const findContactByProviderKey = ({
     includeEncrypted,
   ).exec();
 
+/**
+ * Stores a phone on a contact that does not have one yet, and only then.
+ *
+ * Contacts first seen through an unresolved `@lid` sender are created without a phone. When the
+ * LID mapping becomes available later, this fills the gap without a migration. The "is missing"
+ * test is part of the query so a concurrent writer can never clobber a known number.
+ */
+export const attachContactPhoneIfMissing = ({ contactId, organizationId, phone } = {}) => {
+  if (!phone) {
+    return Promise.resolve(null);
+  }
+
+  return Contact.findOneAndUpdate(
+    {
+      _id: contactId,
+      organizationId,
+      $or: [{ encryptedPhone: null }, { encryptedPhone: { $exists: false } }],
+    },
+    {
+      $set: {
+        encryptedPhone: encryptContactPhoneForStorage(phone),
+      },
+    },
+    {
+      returnDocument: 'after',
+      runValidators: true,
+    },
+  ).exec();
+};
+
 export const findOrCreateContactByProviderKey = async ({
   organizationId,
   providerContactKey,

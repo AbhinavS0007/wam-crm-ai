@@ -206,3 +206,27 @@ export const changePassword = ({ token, currentPassword, newPassword }) =>
     token,
     body: { currentPassword, newPassword },
   });
+
+// --- AI reply assistant + knowledge base (Phase 17) ---
+
+export const generateAiDraft = ({ token, conversationId }) =>
+  apiFetch(`/conversations/${conversationId}/ai-draft`, { method: 'POST', token });
+
+export const recordAiDraftOutcome = ({ token, conversationId, draftId, outcome }) =>
+  apiFetch(`/conversations/${conversationId}/ai-draft/${draftId}/outcome`, {
+    method: 'PATCH',
+    token,
+    body: { outcome },
+  });
+
+export const listAiKnowledge = ({ token } = {}) => apiFetch('/ai/knowledge', { token });
+
+export const createAiKnowledge = ({ token, label, content, category }) =>
+  apiFetch('/ai/knowledge', {
+    method: 'POST',
+    token,
+    body: { label, content, category },
+  });
+
+export const archiveAiKnowledge = ({ token, knowledgeId }) =>
+  apiFetch(`/ai/knowledge/${knowledgeId}/archive`, { method: 'PATCH', token });

@@ -7,6 +7,11 @@ import { hasPermission, PERMISSIONS } from '../../lib/permissions.js';
 const RevealPhone = ({ contactId }) => {
   const { authedRequest, permissions } = useAuth();
   const [phone, setPhone] = useState(null);
+  // `revealed` tracks that the audited call already happened, independently of whether it
+  // returned a number. Without it a contact with no stored phone re-hits the API — and writes
+  // a fresh audit entry — on every click.
+  const [revealed, setRevealed] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -14,13 +19,22 @@ const RevealPhone = ({ contactId }) => {
     return null;
   }
 
-  const handleReveal = async () => {
+  // The audited call happens once per mount. Hiding afterwards is a UI affordance only — the
+  // number has already left the backend, so re-showing it is not a new access to audit.
+  const handleToggle = async () => {
+    if (revealed) {
+      setVisible((current) => !current);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
       const payload = await authedRequest((token) => revealPhone({ token, contactId }));
       setPhone(payload?.data?.phone ?? null);
+      setRevealed(true);
+      setVisible(true);
     } catch (revealError) {
       setError(revealError?.message ?? 'Unable to reveal phone.');
     } finally {
@@ -28,22 +42,48 @@ const RevealPhone = ({ contactId }) => {
     }
   };
 
+  const showing = visible && revealed;
+  const missing = revealed && !phone;
+
+  const buttonLabel = () => {
+    if (loading) {
+      return 'Revealing…';
+    }
+    if (showing) {
+      return missing ? 'Hide' : 'Hide phone';
+    }
+    return 'Reveal phone';
+  };
+
   return (
     <div>
       <p className="mb-1 text-xs font-semibold uppercase text-slate-500">Phone</p>
-      {phone ? (
-        <p className="text-sm font-medium text-slate-900">{phone}</p>
-      ) : (
+      <div className="flex items-center gap-2">
+        {showing ? (
+          <p
+            className={
+              missing ? 'text-sm text-slate-400 italic' : 'text-sm font-medium text-slate-900'
+            }
+          >
+            {missing ? 'No phone on file' : phone}
+          </p>
+        ) : null}
         <button
           type="button"
-          onClick={handleReveal}
+          onClick={handleToggle}
           disabled={loading}
+          aria-pressed={showing}
           className="rounded-lg border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
         >
-          {loading ? 'Revealing…' : 'Reveal phone'}
+          {buttonLabel()}
         </button>
-      )}
-      {phone ? (
+      </div>
+      {showing && missing ? (
+        <p className="mt-1 text-[11px] text-slate-400">
+          This lead reached you from a WhatsApp ID that hides the number.
+        </p>
+      ) : null}
+      {showing && !missing ? (
         <p className="mt-1 text-[11px] text-slate-400">Revealed — this access is audited.</p>
       ) : null}
       {error ? (

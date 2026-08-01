@@ -10,6 +10,8 @@ export const PERMISSIONS = {
   ACCOUNTS_MANAGE: 'accounts.manage',
   USERS_READ: 'users.read',
   USERS_MANAGE: 'users.manage',
+  AI_GENERATE: 'ai.generate',
+  AI_KNOWLEDGE_MANAGE: 'ai.knowledge.manage',
 };
 
 // Roles an admin can assign. `super_admin` is deliberately absent — the backend rejects it

@@ -13,6 +13,7 @@
     "seed:super-admin": "node src/seed-super-admin.js",
     "seed:dev-users": "node src/scripts/seed-dev-users.js",
     "verify:indexes": "node src/scripts/verify-indexes.js",
+    "backfill:lid-phones": "node src/scripts/backfill-lid-phones.js",
     "generate:encryption-key": "node src/scripts/generate-encryption-key.js",
     "encryption:rotation:dry-run": "node src/scripts/key-rotation-dry-run.js",
     "phase5:create-poc-account": "node src/scripts/phase5-create-poc-account.js",
@@ -23,6 +24,7 @@
     "phase5:real-provider-manual": "node src/scripts/phase5-real-provider-manual.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.115.0",
     "@hapi/boom": "10.0.1",
     "@whiskeysockets/baileys": "7.0.0-rc13",
     "bcryptjs": "^3.0.3",

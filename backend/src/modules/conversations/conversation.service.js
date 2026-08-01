@@ -13,6 +13,7 @@ import { serializeMessage } from '../messages/message.serializer.js';
 import { REALTIME_REASONS } from '../realtime/realtime.events.js';
 import { publishConversationChanged } from '../realtime/realtime.publisher.js';
 import { resolveUsableStageValue } from '../stages/stage.service.js';
+import { findAccountById } from '../whatsapp-accounts/whatsapp-account.repository.js';
 import {
   findConversationById,
   listConversations,
@@ -116,14 +117,30 @@ export const getConversationForActor = async ({
     });
   }
 
-  const contact = await findContactById({
-    contactId: conversation.contactId,
-    organizationId,
-  });
+  const [contact, whatsappAccount] = await Promise.all([
+    findContactById({
+      contactId: conversation.contactId,
+      organizationId,
+    }),
+    findAccountById({
+      accountId: conversation.whatsappAccountId,
+      organizationId,
+    }),
+  ]);
 
   return {
     conversation: serializeConversation(viewedConversation),
     contact: serializeContact(contact),
+    // Only the labelling fields — every role that can see the thread may see which number it
+    // arrived on, but not the account's settings or connection detail.
+    whatsappAccount: whatsappAccount
+      ? {
+          id: whatsappAccount._id.toString(),
+          name: whatsappAccount.name,
+          brandKey: whatsappAccount.brandKey,
+          status: whatsappAccount.status,
+        }
+      : null,
   };
 };
 

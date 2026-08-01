@@ -1,5 +1,8 @@
 import { CONVERSATION_STAGES } from '../../../constants/conversation-stages.js';
-import { findOrCreateContactByProviderKey as defaultFindOrCreateContactByProviderKey } from '../../contacts/contact.repository.js';
+import {
+  attachContactPhoneIfMissing as defaultAttachContactPhoneIfMissing,
+  findOrCreateContactByProviderKey as defaultFindOrCreateContactByProviderKey,
+} from '../../contacts/contact.repository.js';
 import {
   updateConversationPreview as defaultUpdateConversationPreview,
   upsertConversationForContact as defaultUpsertConversationForContact,
@@ -69,6 +72,7 @@ const isDuplicateKeyError = (error) => error?.code === 11000;
 export const createInboundMessageIngestionService = ({
   contactRepository = {
     findOrCreateContactByProviderKey: defaultFindOrCreateContactByProviderKey,
+    attachContactPhoneIfMissing: defaultAttachContactPhoneIfMissing,
   },
   conversationRepository = {
     upsertConversationForContact: defaultUpsertConversationForContact,
@@ -111,7 +115,12 @@ export const createInboundMessageIngestionService = ({
     }
 
     const normalizedJid = normalizeProviderJid(senderJid);
-    const phone = extractPhoneFromJid(senderJid);
+
+    // `senderJid` may be an opaque `@lid` that carries no phone. The provider resolves it to a
+    // phone JID when the mapping is known, so prefer that. Contact identity stays keyed on the
+    // sender JID's blind index either way — changing that basis would fork existing contacts.
+    const phone =
+      extractPhoneFromJid(inboundMessage.senderPhoneJid) ?? extractPhoneFromJid(senderJid);
 
     const { contact } = await contactRepository.findOrCreateContactByProviderKey({
       organizationId,
@@ -122,6 +131,17 @@ export const createInboundMessageIngestionService = ({
       providerJids: normalizedJid ? [normalizedJid] : [],
       source: 'whatsapp',
     });
+
+    // A contact created before its LID mapping was known has no stored phone. Fill it in on the
+    // next inbound message so existing rows heal without a migration. The "only if missing"
+    // guard lives in the query, so this never overwrites a known number.
+    if (phone && contact && contactRepository.attachContactPhoneIfMissing) {
+      await contactRepository.attachContactPhoneIfMissing({
+        contactId: contact._id,
+        organizationId,
+        phone,
+      });
+    }
 
     const conversation = await conversationRepository.upsertConversationForContact({
       organizationId,

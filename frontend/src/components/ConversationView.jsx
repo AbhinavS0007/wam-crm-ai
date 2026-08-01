@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { getConversation, getMessages, listStages, sendMessage } from '../api/endpoints.js';
+import {
+  generateAiDraft,
+  getConversation,
+  getMessages,
+  listStages,
+  recordAiDraftOutcome,
+  sendMessage,
+} from '../api/endpoints.js';
 import { useAuth } from '../auth/AuthContext.jsx';
+import { hasPermission, PERMISSIONS } from '../lib/permissions.js';
 import { findStageByKey, mergeStages } from '../lib/stages.js';
 import { useRealtime } from '../realtime/RealtimeProvider.jsx';
 import EmptyState from './EmptyState.jsx';
@@ -26,8 +34,9 @@ const mergeDesc = (existing, incoming) => {
 };
 
 const ConversationView = ({ conversationId }) => {
-  const { authedRequest } = useAuth();
+  const { authedRequest, permissions } = useAuth();
   const { subscribe } = useRealtime();
+  const canSuggestReply = hasPermission(permissions, PERMISSIONS.AI_GENERATE);
   const [detail, setDetail] = useState(null);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -127,7 +136,7 @@ const ConversationView = ({ conversationId }) => {
   }, [authedRequest, conversationId, messages]);
 
   const handleSend = useCallback(
-    async ({ body, idempotencyKey }) => {
+    async ({ body, idempotencyKey, draftId, wasEdited }) => {
       const payload = await authedRequest((token) =>
         sendMessage({ token, conversationId, body, idempotencyKey }),
       );
@@ -135,9 +144,26 @@ const ConversationView = ({ conversationId }) => {
       if (payload?.data) {
         setMessages((current) => mergeDesc(current, [payload.data]));
       }
+
+      // Best-effort feedback metadata (ADR-005) — never blocks or fails the send itself.
+      if (draftId) {
+        authedRequest((token) =>
+          recordAiDraftOutcome({
+            token,
+            conversationId,
+            draftId,
+            outcome: wasEdited ? 'approved_edited' : 'approved_unedited',
+          }),
+        ).catch(() => {});
+      }
     },
     [authedRequest, conversationId],
   );
+
+  const handleSuggest = useCallback(async () => {
+    const payload = await authedRequest((token) => generateAiDraft({ token, conversationId }));
+    return { draftId: payload?.data?.id ?? null, draftText: payload?.data?.draftText ?? '' };
+  }, [authedRequest, conversationId]);
 
   // Oldest → newest for rendering.
   const orderedMessages = useMemo(() => [...messages].reverse(), [messages]);
@@ -163,14 +189,23 @@ const ConversationView = ({ conversationId }) => {
   const conversation = detail?.conversation;
   const effectiveStage = stageOverride ?? conversation?.stage;
   const contactId = detail?.contact?.id ?? null;
+  const whatsappAccount = detail?.whatsappAccount ?? null;
 
   return (
     <div className="flex min-w-0 flex-1">
       <section className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
-          <div>
+          <div className="min-w-0">
             <h2 className="font-semibold text-slate-900">{conversation?.displayName}</h2>
-            <p className="text-xs text-slate-400">{conversation?.leadId}</p>
+            <p className="flex items-center gap-1.5 text-xs text-slate-400">
+              <span>{conversation?.leadId}</span>
+              {whatsappAccount ? (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span className="truncate text-slate-500">via {whatsappAccount.name}</span>
+                </>
+              ) : null}
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <StageBadge
@@ -202,7 +237,11 @@ const ConversationView = ({ conversationId }) => {
           />
         )}
 
-        <MessageComposer onSend={handleSend} />
+        <MessageComposer
+          onSend={handleSend}
+          onSuggest={handleSuggest}
+          canSuggest={canSuggestReply}
+        />
       </section>
 
       {detailsOpen && conversation ? (

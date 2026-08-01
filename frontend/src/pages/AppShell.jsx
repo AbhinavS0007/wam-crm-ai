@@ -8,6 +8,7 @@ import { useAuth } from '../auth/AuthContext.jsx';
 import { getInitials } from '../lib/format.js';
 import { hasPermission, PERMISSIONS } from '../lib/permissions.js';
 import AccountsPage from './AccountsPage.jsx';
+import AiKnowledgePage from './AiKnowledgePage.jsx';
 import StagesPage from './StagesPage.jsx';
 import TeamPage from './TeamPage.jsx';
 
@@ -31,6 +32,7 @@ const AppShell = () => {
   const canReadAccounts = hasPermission(permissions, PERMISSIONS.ACCOUNTS_READ);
   const canReadUsers = hasPermission(permissions, PERMISSIONS.USERS_READ);
   const canManageStages = hasPermission(permissions, PERMISSIONS.CRM_STAGE_MANAGE);
+  const canManageAiKnowledge = hasPermission(permissions, PERMISSIONS.AI_KNOWLEDGE_MANAGE);
 
   // A temporary password must be replaced before anything else is reachable. The backend
   // enforces this too, so this is UX rather than the security boundary.
@@ -65,6 +67,11 @@ const AppShell = () => {
                 Stages
               </NavButton>
             ) : null}
+            {canManageAiKnowledge ? (
+              <NavButton active={view === 'ai-knowledge'} onClick={() => setView('ai-knowledge')}>
+                Knowledge
+              </NavButton>
+            ) : null}
           </nav>
         </div>
         <div className="flex items-center gap-3">
@@ -95,6 +102,10 @@ const AppShell = () => {
       ) : view === 'stages' && canManageStages ? (
         <div className="min-h-0 flex-1 overflow-y-auto">
           <StagesPage />
+        </div>
+      ) : view === 'ai-knowledge' && canManageAiKnowledge ? (
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <AiKnowledgePage />
         </div>
       ) : (
         <div className="flex min-h-0 flex-1">

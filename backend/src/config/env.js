@@ -82,6 +82,26 @@ const envSchema = z.object({
   WHATSAPP_OUTBOUND_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(10).default(3),
 
   WHATSAPP_OUTBOUND_POLL_INTERVAL_MS: z.coerce.number().int().min(1000).max(60000).default(5000),
+
+  // ADR-005's disable switch: AI features stay off until explicitly enabled.
+  AI_ENABLED: booleanString.default(false),
+
+  AI_PROVIDER: z.enum(['anthropic', 'grok', 'groq']).default('anthropic'),
+
+  ANTHROPIC_API_KEY: z.string().optional(),
+
+  XAI_API_KEY: z.string().optional(),
+
+  GROQ_API_KEY: z.string().optional(),
+
+  // No default here — each provider adapter supplies its own sensible default model when unset.
+  AI_MODEL: z.string().min(1).optional(),
+
+  AI_MAX_OUTPUT_TOKENS: z.coerce.number().int().min(50).max(2000).default(300),
+
+  AI_DRAFT_RATE_LIMIT_PER_HOUR: z.coerce.number().int().min(1).max(500).default(30),
+
+  AI_DRAFT_CONTEXT_MESSAGE_COUNT: z.coerce.number().int().min(1).max(100).default(20),
 });
 
 const result = envSchema.safeParse(process.env);
